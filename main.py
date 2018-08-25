@@ -12,27 +12,23 @@ import math
 # NOTE: Z = 1, Y = 0
 def main():
     data = loadFile("boolean.csv")
+    print(data)
 
-    attributes = data[1]
-    targetAttributes = data[2]
+    attributes = data[:, 1]
+    targetAttributes = data[:, 2]
 
-    listOfAttributes = splitAttributes(attributes)
+    #only 2 classes, 1 (OR be true), 0 (OR be false)
+    totalEntropy = entropy(data[:, 1:], [1, 0])
+    print(totalEntropy)
 
-    makeID3(attributes, targetAttributes)
-
-
+    # listOfAttributes = splitAttributes(attributes)
+    #
+    # makeID3(attributes, targetAttributes)
 
 def loadFile(fileName):
-    data = []
 
     file = pd.read_csv(fileName)
-
-    data.append(file.iloc[:, 0])
-    data.append(file.iloc[:, 1])
-    data.append(file.iloc[:, 2])
-
-    for line in data:
-        print(line)
+    data = file.values
 
     return data
 
@@ -51,6 +47,7 @@ def entropy(examples, classes):
     #down and dirty dictionaries for now
     labels = {}
     label_totals = {}
+    total_examples = len(examples)
 
     for i in range(0, len(classes)):
         labels["class" + str(i)] = classes[i]
@@ -60,16 +57,20 @@ def entropy(examples, classes):
 
     #go through each example (need to determine if column 2 is going to be output)
     for example in examples:
+        print(example[0])
         #check which class it is, once match found, break
         for i in range(0, len(classes)):
-            if(example[2] == labels["class" + str(i)]):
+            print(example[1])
+            if(example[1] == labels["class" + str(i)]):
                 #if the output class for this example matches, add one to total classes
                 label_totals["class" + str(i)] = label_totals["class" + str(i)] + 1
                 break
 
+
     #calculate entropy now that proportions are known (p_i)
-    for i in range(0, len(listOfValues)):
-        p_i = labels["class" + str(i)] / label_totals["class" + str(i)]
+    for i in range(0, len(classes)):
+        p_i = label_totals["class" + str(i)] / total_examples
+        print("p_i val: " +  str(p_i))
         entropy = entropy - p_i * math.log(p_i, 2)
 
     return entropy
@@ -78,12 +79,7 @@ def entropy(examples, classes):
 def gain(examples, features):
     return 1
 
-
-
-
 def splitAttributes(attributes):
-
-
     list0 = []
     list1 = []
 
@@ -101,9 +97,5 @@ def splitAttributes(attributes):
 
 
 #def id3(attributes, targetAttributes):
-
-
-
-
 
 main()
