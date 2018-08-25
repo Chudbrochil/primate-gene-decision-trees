@@ -36,8 +36,8 @@ def loadFile(fileName):
 #Make a function that looks at all features and picks highest information gained one...
 """ Caclulates entropy on current set of examples.
     Used for the entire dataset and each value of a feature.
-    examples - the dataset containing features and labels
-    classes - list of possible classifications of an example
+    examples - the dataset containing features and labels.
+    classes - list of possible classifications of an example.
     based on eq. 3.3 pg. 59 of Machine Learning by Tom Mitchell
  """
 def entropy(examples, classes):
@@ -55,17 +55,15 @@ def entropy(examples, classes):
     for i in range(0, len(classes)):
         label_totals["class" + str(i)] = 0
 
-    #go through each example (need to determine if column 2 is going to be output)
+    #go through each example
     for example in examples:
-        print(example[0])
-        #check which class it is, once match found, break
+        #go through each class for current example, once match found, break
         for i in range(0, len(classes)):
-            print(example[1])
-            if(example[1] == labels["class" + str(i)]):
+            #the output will always be the last element of the example
+            if(example[-1:] == labels["class" + str(i)]):
                 #if the output class for this example matches, add one to total classes
                 label_totals["class" + str(i)] = label_totals["class" + str(i)] + 1
                 break
-
 
     #calculate entropy now that proportions are known (p_i)
     for i in range(0, len(classes)):
