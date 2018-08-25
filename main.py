@@ -73,9 +73,46 @@ def entropy(examples, classes):
 
     return entropy
 
-""" Gain calculates the information gain of each feature on current passed in examples """
-def gain(examples, features):
-    return 1
+""" Gain calculates the information gain of each feature on current passed in examples
+   gain(data, A) -> will look through values Y & Z for feature A.
+   feature - an object... with this features column index in the
+   dataset and needs to have a list of it's values....
+"""
+#TODO DETERMINE IF FEATURE BEING PASSED INTO GAIN SHOULD BE AN OBJECT
+def gain(examples, feature):
+
+    #gain step 1, take entropy of all examples
+    gain = entropy(examples)
+
+    #step 1.5, make examles into a dictionary
+    # dictionary_examples = convertExamplesToDictionary(examples)
+
+    #gain step2, sum entropies of each value for current feature
+    for value in feature.values:
+        subset_of_value = valuesInExamples(examples, value, feature)
+        total_subset_of_value = len(subset_of_value)
+        proportion_of_subset = total_subset_of_value / len(examples)
+        gain = gain + (proportion_of_subset * entropy(subset_of_value))
+
+    return gain
+
+def valuesInExamples(examples, value, feature):
+    subset_of_value = []
+    #go through each example
+    for example in examples:
+        #go through only feature passed into gain and check value
+        if(example[feature.featureIndex] == value):
+            subset_of_value.append(example[feature.featureIndex])
+
+    return subset_of_value
+
+# def convertExamplesToDictionary(examples):
+#     dictionary_examples = {}
+#
+#     for example in examples:
+#         for i in range(0, len(example)):
+#             dictionary["feature" + str(i)]
+
 
 def splitAttributes(attributes):
     list0 = []
