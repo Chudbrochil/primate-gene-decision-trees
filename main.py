@@ -97,6 +97,7 @@ def gain(examples, feature):
 
     #gain step 1, take entropy of all examples
     gain = entropy(examples, [0, 1])
+    print(gain)
 
     #step 1.5, make examles into a dictionary
     # dictionary_examples = convertExamplesToDictionary(examples)
@@ -108,7 +109,8 @@ def gain(examples, feature):
         total_subset_of_value = len(subset_of_example)
         print("total subset of value " + str(total_subset_of_value))
         proportion_of_subset = total_subset_of_value / len(examples)
-        gain = gain + (proportion_of_subset * entropy(subset_of_example, [0,1]))
+        print("proportion of subset " + str(proportion_of_subset))
+        gain = gain - (proportion_of_subset * entropy(subset_of_example, [0,1]))
 
     return gain
 
@@ -148,17 +150,14 @@ def detect_features(data_features_split):
     #go through each feature in data
     for i in range(0, data_features_split.shape[1]):
         feature = dt.Feature(i, [])
-        index_last_value = -1
         #go through each example to determine each value of feature
         for example in data_features_split:
             #if no values currently
             if not feature.values:
                 feature.addValue(example[i])
-                index_last_value += 1
             #else if current value hasn't been seen before, add it to list
-            elif example[i] != feature.values[index_last_value]:
+            elif example[i] not in feature.values:
                 feature.addValue(example[i])
-                index_last_value += 1
         #after going through all of the examples, add feature object to list
         list_of_features.append(feature)
 
