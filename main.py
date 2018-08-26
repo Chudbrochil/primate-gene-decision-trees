@@ -82,9 +82,7 @@ def entropy(examples, classes):
     for i in range(numOfClasses):
         print("current label " + str(labels["class" + str(i)]))
         p_i = label_totals["class" + str(i)] / total_examples
-        if p_i == 0:
-            entropy = entropy - 0
-        else:
+        if p_i != 0:
             entropy = entropy - p_i * math.log(p_i, 2)
 
     return entropy
@@ -106,11 +104,11 @@ def gain(examples, feature):
     #gain step2, sum entropies of each value for current feature
     for value in feature.values:
         print(value)
-        subset_of_value = valuesInExamples(examples, value, feature)
-        total_subset_of_value = len(subset_of_value)
+        subset_of_example = valuesInExamples(examples, value, feature)
+        total_subset_of_value = len(subset_of_example)
         print("total subset of value " + str(total_subset_of_value))
         proportion_of_subset = total_subset_of_value / len(examples)
-        gain = gain + (proportion_of_subset * entropy(subset_of_value, [0,1]))
+        gain = gain + (proportion_of_subset * entropy(subset_of_example, [0,1]))
 
     return gain
 
@@ -136,8 +134,8 @@ def splitFeatures(data):
     features = data[:, 1]
     matrix_of_features = []
 
-    for feature in features:
-        split_feature = list(feature) #convert string in column to characters
+    for example in features:
+        split_feature = list(example) #convert string in column to characters
         matrix_of_features.append(split_feature)
 
     data_features_split = np.c_[matrix_of_features, data[:, 2]]
@@ -147,10 +145,10 @@ def splitFeatures(data):
 def detect_features(data_features_split):
     list_of_features = []
     #go through each feature in data
-    for i in range(0, data_features_split.shape[1]-1):
+    for i in range(0, data_features_split.shape[1]):
         feature = dt.Feature(i, [])
         index_last_value = -1
-        #go through each example to determine each type of feature
+        #go through each example to determine each value of feature
         for example in data_features_split:
             #if no values currently
             if not feature.values:
