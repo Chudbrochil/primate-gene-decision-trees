@@ -138,6 +138,7 @@ def splitFeatures(data):
         split_feature = list(example) #convert string in column to characters
         matrix_of_features.append(split_feature)
 
+    # Concatenation of features and the "output". Output also known as labels
     data_features_split = np.c_[matrix_of_features, data[:, 2]]
 
     return data_features_split
