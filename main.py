@@ -13,13 +13,12 @@ import decision_tree as dt
 
 # NOTE: Z = 1, Y = 0
 def main():
-    data = loadFile("boolean.csv")
-    print(data)
+    data = loadFile("training.csv")
 
     data_features_split = splitFeatures(data)
     print(data_features_split)
 
-    feature_objects = detect_features(data_features_split)
+    feature_objects = createFeatureObjects(data_features_split)
 
     #for i in range(0, len(feature_objects)):
         #print(feature_objects[i].featureIndex)
@@ -28,12 +27,20 @@ def main():
     #totalEntropy = entropy(data_features_split, [1, 0])
     #print(totalEntropy)
 
-    info_gain_feature0 = gain(data_features_split, feature_objects[0])
-    print(info_gain_feature0)
+    # Extracting the classifications from our data
+    listOfListOfClasses = (data_features_split[:,-1:]).tolist()
+    classes = set()
+    for list in listOfListOfClasses:
+        classes.add(list[0])
 
-    # listOfAttributes = splitAttributes(attributes)
-    #
-    # makeID3(attributes, targetAttributes)
+    listOfClasses = []
+    for element in classes:
+        listOfClasses.append(element)
+
+    print("Classifications found: " + str(listOfClasses))
+
+    info_gain_feature0 = gain(data_features_split, feature_objects[0], listOfClasses)
+    print("Information gain on column 0(feature 0): " + str(info_gain_feature0))
 
 def loadFile(fileName):
 
@@ -69,7 +76,6 @@ def entropy(examples, classes):
 
     #go through each example
     for example in examples:
-        #print("going through example" + str(example))
         #go through each class for current example, once match found, break
         for i in range(numOfClasses):
             #the output will always be the last element of the example
@@ -80,7 +86,6 @@ def entropy(examples, classes):
 
     #calculate entropy now that proportions are known (p_i)
     for i in range(numOfClasses):
-        #print("current label " + str(labels["class" + str(i)]))
         p_i = label_totals["class" + str(i)] / total_examples
         if p_i != 0:
             entropy = entropy - p_i * math.log(p_i, 2)
@@ -93,24 +98,24 @@ def entropy(examples, classes):
    dataset and needs to have a list of it's values....
 """
 #TODO DETERMINE IF FEATURE BEING PASSED INTO GAIN SHOULD BE AN OBJECT
-def gain(examples, feature):
+def gain(examples, feature, classes):
 
     #gain step 1, take entropy of all examples
-    gain = entropy(examples, [0, 1])
+    gain = entropy(examples, classes)
 
     #step 1.5, make examles into a dictionary
     # dictionary_examples = convertExamplesToDictionary(examples)
 
 
     feature.values = set(feature.values)
-    print(feature.values)
+    print("Features found at root: " + str(feature.values))
 
     #gain step2, sum entropies of each value for current feature
     for value in feature.values:
         subset_of_example = valuesInExamples(examples, value, feature)
         total_subset_of_value = len(subset_of_example)
         proportion_of_subset = total_subset_of_value / len(examples) * 1.0
-        proportionalSubsetEntropy = proportion_of_subset * entropy(subset_of_example, [0,1])
+        proportionalSubsetEntropy = proportion_of_subset * entropy(subset_of_example, classes)
         gain = gain - proportionalSubsetEntropy
 
     return gain
@@ -146,7 +151,7 @@ def splitFeatures(data):
 
     return data_features_split
 
-def detect_features(data_features_split):
+def createFeatureObjects(data_features_split):
     list_of_features = []
     #go through each feature in data
     for i in range(0, data_features_split.shape[1]):
@@ -165,11 +170,8 @@ def detect_features(data_features_split):
         #after going through all of the examples, add feature object to list
         list_of_features.append(feature)
 
+
     return list_of_features
 
-
-
-
-#def id3(attributes, targetAttributes):
 
 main()
