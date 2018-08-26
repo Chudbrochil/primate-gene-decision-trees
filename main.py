@@ -59,6 +59,7 @@ def entropy(examples, classes):
     label_totals = {}
     total_examples = len(examples)
 
+    #initializing dictionaries corresponding to generic amount of classes
     for i in range(0, len(classes)):
         labels["class" + str(i)] = classes[i]
 
