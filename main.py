@@ -61,10 +61,10 @@ def entropy(examples, classes):
 
     numOfClasses = len(classes)
 
-    for i in range(0, numOfClasses):
+    for i in range(numOfClasses):
         labels["class" + str(i)] = classes[i]
 
-    for i in range(0, numOfClasses):
+    for i in range(numOfClasses):
         label_totals["class" + str(i)] = 0
 
     #go through each example
@@ -79,7 +79,7 @@ def entropy(examples, classes):
                 break
 
     #calculate entropy now that proportions are known (p_i)
-    for i in range(0, len(classes)):
+    for i in range(numOfClasses):
         print("current label " + str(labels["class" + str(i)]))
         p_i = label_totals["class" + str(i)] / total_examples
         if p_i == 0:
