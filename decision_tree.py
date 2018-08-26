@@ -5,7 +5,7 @@ class Node():
         self.feature = feature
         self.branches = []
 
-    def addBranch(branch):
+    def addBranch(self, branch):
         self.branches.append(branch)
 
 class Branch():
@@ -17,5 +17,5 @@ class Feature():
         self.featureIndex = featureIndex
         self.values = values
 
-    def addValue(value):
+    def addValue(self, value):
         self.values.append(value)
