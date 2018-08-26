@@ -59,18 +59,19 @@ def entropy(examples, classes):
     label_totals = {}
     total_examples = len(examples)
 
-    #initializing dictionaries corresponding to generic amount of classes
-    for i in range(0, len(classes)):
+    numOfClasses = len(classes)
+
+    for i in range(0, numOfClasses):
         labels["class" + str(i)] = classes[i]
 
-    for i in range(0, len(classes)):
+    for i in range(0, numOfClasses):
         label_totals["class" + str(i)] = 0
 
     #go through each example
     for example in examples:
         print("going through example" + str(example))
         #go through each class for current example, once match found, break
-        for i in range(0, len(classes)):
+        for i in range(numOfClasses):
             #the output will always be the last element of the example
             if(example[-1:] == labels["class" + str(i)]):
                 #if the output class for this example matches, add one to total classes
