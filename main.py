@@ -20,13 +20,6 @@ def main():
 
     feature_objects = createFeatureObjects(data_features_split)
 
-    #for i in range(0, len(feature_objects)):
-        #print(feature_objects[i].featureIndex)
-
-    #only 2 classes, 1 (OR be true), 0 (OR be false)
-    #totalEntropy = entropy(data_features_split, [1, 0])
-    #print(totalEntropy)
-
     # Extracting the classifications from our data
     listOfListOfClasses = (data_features_split[:,-1:]).tolist()
     classes = set()
@@ -61,7 +54,6 @@ def entropy(examples, classes):
 
     entropy = 0
 
-    #down and dirty dictionaries for now
     labels = {}
     label_totals = {}
     total_examples = len(examples)
@@ -106,7 +98,6 @@ def gain(examples, feature, classes):
     #step 1.5, make examles into a dictionary
     # dictionary_examples = convertExamplesToDictionary(examples)
 
-
     feature.values = set(feature.values)
     print("Features found at root: " + str(feature.values))
 
@@ -130,14 +121,6 @@ def valuesInExamples(examples, value, feature):
 
     return subset_of_value
 
-# def convertExamplesToDictionary(examples):
-#     dictionary_examples = {}
-#
-#     for example in examples:
-#         for i in range(0, len(example)):
-#             dictionary["feature" + str(i)]
-
-
 def splitFeatures(data):
     features = data[:, 1]
     matrix_of_features = []
@@ -153,23 +136,20 @@ def splitFeatures(data):
 
 def createFeatureObjects(data_features_split):
     list_of_features = []
+
     #go through each feature in data
     for i in range(0, data_features_split.shape[1]):
         feature = dt.Feature(i, [])
-        index_last_value = -1
         #go through each example to determine each value of feature
         for example in data_features_split:
             #if no values currently
             if not feature.values:
                 feature.addValue(example[i])
-                index_last_value += 1
             #else if current value hasn't been seen before, add it to list
-            elif example[i] != feature.values[index_last_value]:
+            elif example[i] not in feature.values:
                 feature.addValue(example[i])
-                index_last_value += 1
         #after going through all of the examples, add feature object to list
         list_of_features.append(feature)
-
 
     return list_of_features
 
