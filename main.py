@@ -10,118 +10,47 @@ import pandas as pd
 import math
 import numpy as np
 import decision_tree as dt
+import dt_math as dt_math
 
-# NOTE: Z = 1, Y = 0
 def main():
-    data = loadFile("training.csv")
+    data = load_file("training.csv")
+    data_features_split = split_features(data)
+    feature_objects = create_features(data_features_split)
+    list_of_classes = get_classifications(data_features_split[:,-1:])
 
-    data_features_split = splitFeatures(data)
-    print(data_features_split)
+    print("Classifications found: " + str(list_of_classes))
 
-    feature_objects = createFeatureObjects(data_features_split)
-
-    # Extracting the classifications from our data
-    listOfListOfClasses = (data_features_split[:,-1:]).tolist()
-    classes = set()
-    for list in listOfListOfClasses:
-        classes.add(list[0])
-
-    listOfClasses = []
-    for element in classes:
-        listOfClasses.append(element)
-
-    print("Classifications found: " + str(listOfClasses))
-
-    info_gain_feature0 = gain(data_features_split, feature_objects[0], listOfClasses)
+    info_gain_feature0 = dt_math.gain(data_features_split, feature_objects[0], list_of_classes)
     print("Information gain on column 0(feature 0): " + str(info_gain_feature0))
 
-def loadFile(fileName):
 
-    file = pd.read_csv(fileName)
+#TODO:
+#Make a function that looks at all features and picks highest information gained one...
+
+
+def load_file(file_name):
+
+    file = pd.read_csv(file_name)
     data = file.values
 
     return data
 
-#TODO:
-#Make a function that looks at all features and picks highest information gained one...
-""" Caclulates entropy on current set of examples.
-    Used for the entire dataset and each value of a feature.
-    examples - the dataset containing features and labels.
-    classes - list of possible classifications of an example.
-    based on eq. 3.3 pg. 59 of Machine Learning by Tom Mitchell
- """
-def entropy(examples, classes):
+# Obtaining the classifications from our data. For the DNA data, should be ["IE", "EI", "N"]
+def get_classifications(class_list):
+    classes = set()
+    for list in class_list:
+        classes.add(list[0])
 
-    entropy = 0
+    list_of_classes = []
+    for element in classes:
+        list_of_classes.append(element)
 
-    labels = {}
-    label_totals = {}
-    total_examples = len(examples)
+    return list_of_classes
 
-    numOfClasses = len(classes)
 
-    for i in range(numOfClasses):
-        labels["class" + str(i)] = classes[i]
 
-    for i in range(numOfClasses):
-        label_totals["class" + str(i)] = 0
 
-    #go through each example
-    for example in examples:
-        #go through each class for current example, once match found, break
-        for i in range(numOfClasses):
-            #the output will always be the last element of the example
-            if(example[-1:] == labels["class" + str(i)]):
-                #if the output class for this example matches, add one to total classes
-                label_totals["class" + str(i)] = label_totals["class" + str(i)] + 1
-                break
-
-    #calculate entropy now that proportions are known (p_i)
-    for i in range(numOfClasses):
-        p_i = label_totals["class" + str(i)] / total_examples
-        if p_i != 0:
-            entropy = entropy - p_i * math.log(p_i, 2)
-
-    return entropy
-
-""" Gain calculates the information gain of each feature on current passed in examples
-   gain(data, A) -> will look through values Y & Z for feature A.
-   feature - an object... with this features column index in the
-   dataset and needs to have a list of it's values....
-"""
-#TODO DETERMINE IF FEATURE BEING PASSED INTO GAIN SHOULD BE AN OBJECT
-def gain(examples, feature, classes):
-
-    #gain step 1, take entropy of all examples
-    gain = entropy(examples, classes)
-
-    #step 1.5, make examles into a dictionary
-    # dictionary_examples = convertExamplesToDictionary(examples)
-
-    feature.values = set(feature.values)
-    print("Features found at root: " + str(feature.values))
-
-    #gain step2, sum entropies of each value for current feature
-    for value in feature.values:
-        subset_of_example = valuesInExamples(examples, value, feature)
-        total_subset_of_value = len(subset_of_example)
-        proportion_of_subset = total_subset_of_value / len(examples) * 1.0
-        proportionalSubsetEntropy = proportion_of_subset * entropy(subset_of_example, classes)
-        gain = gain - proportionalSubsetEntropy
-
-    return gain
-
-def valuesInExamples(examples, value, feature):
-    subset_of_value = []
-    #go through each example
-    for example in examples:
-        #go through only feature passed into gain and check value
-        if(example[feature.featureIndex] == value):
-            subset_of_value.append(example)
-
-    return subset_of_value
-
-def splitFeatures(data):
+def split_features(data):
     features = data[:, 1]
     matrix_of_features = []
 
@@ -134,7 +63,7 @@ def splitFeatures(data):
 
     return data_features_split
 
-def createFeatureObjects(data_features_split):
+def create_features(data_features_split):
     list_of_features = []
 
     #go through each feature in data
