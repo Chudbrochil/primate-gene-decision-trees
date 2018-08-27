@@ -10,9 +10,40 @@ def entropy(examples, classes):
 
     entropy = 0
 
+    #determine each unique class and count how many times each is in set of examples
+    label_totals = determine_class_totals(examples, classes)
+
+    total_examples = len(examples)
+    numOfClasses = len(classes)
+
+    #calculate entropy now that proportions are known (p_i)
+    for i in range(numOfClasses):
+        p_i = label_totals["class" + str(i)] / total_examples
+        if p_i != 0:
+            entropy = entropy - p_i * math.log(p_i, 2)
+
+    return entropy
+
+def gni_index(examples, classes):
+    gni = 1
+
+    #determine each unique class and count how many times each is in set of examples
+    label_totals = determine_class_totals(examples, classes)
+
+    total_examples = len(examples)
+    numOfClasses = len(classes)
+
+    #calculate entropy now that proportions are known (p_i)
+    for i in range(numOfClasses):
+        p_i = label_totals["class" + str(i)] / total_examples
+        if p_i != 0:
+            gni = gni - (p_i ** 2)
+
+    return gni
+
+def determine_class_totals(examples, classes):
     labels = {}
     label_totals = {}
-    total_examples = len(examples)
 
     numOfClasses = len(classes)
 
@@ -32,13 +63,7 @@ def entropy(examples, classes):
                 label_totals["class" + str(i)] = label_totals["class" + str(i)] + 1
                 break
 
-    #calculate entropy now that proportions are known (p_i)
-    for i in range(numOfClasses):
-        p_i = label_totals["class" + str(i)] / total_examples
-        if p_i != 0:
-            entropy = entropy - p_i * math.log(p_i, 2)
-
-    return entropy
+    return label_totals
 
 """ Gain calculates the information gain of each feature on current passed in examples
    gain(data, A) -> will look through values Y & Z for feature A.
@@ -46,23 +71,29 @@ def entropy(examples, classes):
    dataset and needs to have a list of it's values....
 """
 #TODO DETERMINE IF FEATURE BEING PASSED INTO GAIN SHOULD BE AN OBJECT
-def gain(examples, feature, classes):
+def gain(examples, feature, classes, impurity = "entropy"):
 
-    #gain step 1, take entropy of all examples
-    gain = entropy(examples, classes)
+    #determine which impurity measure we're using for info gain
+    if(impurity == "entropy"):
+        impurity_func = entropy
+    else:
+        impurity_func = gni_index
 
-    #step 1.5, make examles into a dictionary
-    # dictionary_examples = convertExamplesToDictionary(examples)
+    #determine impurity of entire dataset
+    gain = impurity_func(examples, classes)
 
+    #determine the unique values for this feature
     feature.values = set(feature.values)
     print("Features found at root: " + str(feature.values))
 
-    #gain step2, sum entropies of each value for current feature
+    #determine impurity for each value in feature, sum together and return info gain
     for value in feature.values:
+        #return subset of examples that only have this value
         subset_of_example = valuesInExamples(examples, value, feature)
         total_subset_of_value = len(subset_of_example)
+        #math of information gain
         proportion_of_subset = total_subset_of_value / len(examples) * 1.0
-        subset_entropy = proportion_of_subset * entropy(subset_of_example, classes)
+        subset_entropy = proportion_of_subset * impurity_func(subset_of_example, classes)
         gain = gain - subset_entropy
 
     return gain
