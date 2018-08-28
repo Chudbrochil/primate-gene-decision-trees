@@ -21,10 +21,8 @@ def main():
 
     print("Classifications found: " + str(list_of_classes))
 
-    info_gain_feature0 = dt_math.gain(data_features_split, feature_objects[1], list_of_classes,
-                                    impurity = "entropy")
-    info_gain_gni_feature0 = dt_math.gain(data_features_split, feature_objects[1], list_of_classes,
-                                    impurity = "gni_index")
+    info_gain_feature0 = dt_math.gain(data_features_split, feature_objects[1], list_of_classes, dt_math.entropy)
+    info_gain_gni_feature0 = dt_math.gain(data_features_split, feature_objects[1], list_of_classes, dt_math.gni_index)
 
     print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
     print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
