@@ -25,6 +25,7 @@ def entropy(examples, classes):
     return entropy
 
 def gni_index(examples, classes):
+
     gni = 1
 
     #determine each unique class and count how many times each is in set of examples
@@ -71,13 +72,7 @@ def determine_class_totals(examples, classes):
    dataset and needs to have a list of it's values....
 """
 #TODO DETERMINE IF FEATURE BEING PASSED INTO GAIN SHOULD BE AN OBJECT
-def gain(examples, feature, classes, impurity = "entropy"):
-
-    #determine which impurity measure we're using for info gain
-    if(impurity == "entropy"):
-        impurity_func = entropy
-    else:
-        impurity_func = gni_index
+def gain(examples, feature, classes, impurity_func):
 
     #determine impurity of entire dataset
     gain = impurity_func(examples, classes)

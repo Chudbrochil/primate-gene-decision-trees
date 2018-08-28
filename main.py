@@ -14,7 +14,7 @@ import dt_math as dt_math
 
 def main():
     data = load_file("training.csv")
-    partition_size = 2
+    partition_size = 1
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
@@ -27,9 +27,45 @@ def main():
     print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
     print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
 
+    simpleID3(data_features_split, list_of_classes, feature_objects)
+
 
 #TODO:
 #Make a function that looks at all features and picks highest information gained one...
+
+# "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
+def simpleID3(data_features_split, list_of_classes, feature_objects):
+
+    # "The attribute from Attributes that best* classifies Examples"
+    highest_ig_feature_index = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
+
+    # TODO: Make the root node
+
+
+
+def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
+
+    list_of_igs = []
+
+    # Getting how many characters long each example is
+    length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
+
+    highest_ig_num = 0.0
+    highest_ig_index = -1
+
+    for feature_index in range(length_of_data):
+        info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
+        print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
+
+        # Getting the highest info gained feature
+        if info_gained_entropy > highest_ig_num:
+            highest_ig_num = info_gained_entropy
+            highest_ig_index = feature_index
+
+    print("Highest_ig_num: %f Highest_ig_index: %d" % (highest_ig_num, highest_ig_index))
+
+    # Outputting the index of the feature that has the highest info gained
+    return highest_ig_index
 
 
 def load_file(file_name):
@@ -58,7 +94,6 @@ def split_features(data, partition_size = 1):
 
     for sequence in features:
         split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
-        print(split_sequence)
         matrix_of_features.append(split_sequence)
 
     # Concatenation of features and the "output". Output also known as labels
@@ -76,10 +111,10 @@ def create_features(data_features_split):
         for example in data_features_split:
             #if no values currently
             if not feature.values:
-                feature.addValue(example[i])
+                feature.add_branch(example[i])
             #else if current value hasn't been seen before, add it to list
             elif example[i] not in feature.values:
-                feature.addValue(example[i])
+                feature.add_branch(example[i])
         #after going through all of the examples, add feature object to list
         list_of_features.append(feature)
 

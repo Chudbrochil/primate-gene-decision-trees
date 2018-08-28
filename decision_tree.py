@@ -1,21 +1,14 @@
 
-
-class Node():
-    def __init__(self, feature):
-        self.feature = feature
-        self.branches = []
-
-    def addBranch(self, branch):
-        self.branches.append(branch)
-
-class Branch():
-    def __init__(self, value):
-        self.value = value
-
+# A given feature is a node, the values are otherwise known as "branches"
 class Feature():
-    def __init__(self, featureIndex, values):
-        self.featureIndex = featureIndex
+
+    def __init__(self, feature_index, values):
+        self.feature_index = feature_index
         self.values = values
 
-    def addValue(self, value):
-        self.values.append(value)
+    def add_branch(self, branch):
+        self.branchs.append(branch)
+
+class Branch():
+    def __init__(self, branch_value):
+        self.branch_value = branch_value
