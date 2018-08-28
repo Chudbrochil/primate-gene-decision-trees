@@ -77,14 +77,13 @@ def gain(examples, feature, classes, impurity_func):
     #determine impurity of entire dataset
     gain = impurity_func(examples, classes)
 
-    #determine the unique values for this feature
-    feature.values = set(feature.values)
-    print("Features found at root: " + str(feature.values))
+    # TODO: Remove this line, not related to GAIN
+    print("Features found: " + str(feature.get_branches()))
 
     #determine impurity for each value in feature, sum together and return info gain
-    for value in feature.values:
+    for branch in feature.get_branches():
         #return subset of examples that only have this value
-        subset_of_example = valuesInExamples(examples, value, feature)
+        subset_of_example = get_example_matching_value(examples, branch, feature)
         total_subset_of_value = len(subset_of_example)
         #math of information gain
         proportion_of_subset = total_subset_of_value / len(examples) * 1.0
@@ -94,12 +93,12 @@ def gain(examples, feature, classes, impurity_func):
     return gain
 
 
-def valuesInExamples(examples, value, feature):
+def get_example_matching_value(examples, value, feature):
     subset_of_value = []
     #go through each example
     for example in examples:
         #go through only feature passed into gain and check value
-        if(example[feature.featureIndex] == value):
+        if(example[feature.feature_index] == value):
             subset_of_value.append(example)
 
     return subset_of_value

@@ -2,13 +2,20 @@
 # A given feature is a node, the values are otherwise known as "branches"
 class Feature():
 
-    def __init__(self, feature_index, values):
+    def __init__(self, feature_index, branches):
         self.feature_index = feature_index
-        self.values = values
+        self.branches = branches
 
     def add_branch(self, branch):
-        self.branchs.append(branch)
+        self.branches.append(branch)
+
+    def get_branches(self):
+        return self.branches
 
 class Branch():
     def __init__(self, branch_value):
         self.branch_value = branch_value
+
+    # What feature is this branch pointing to
+    def add_child_feature(self, feature):
+        self.child_feature = feature

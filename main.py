@@ -39,10 +39,23 @@ def simpleID3(data_features_split, list_of_classes, feature_objects):
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
 
-    # TODO: Make the root node
+    root = features_objects[highest_ig_feature_index]
+
+    # For every possible branch(value). Should look like {A, C, G, T}
+    for branch in root.get_branches():
+
+        # Gathering all examples that match this branch value
+        subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch, root) # TODO: Change root to make this recursive
+
+        # If the examples list is not empty
+        if not subset_data_features_match:
+            
 
 
 
+
+
+# Obtaining the highest information gain feature index from the remaining list of features
 def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
     list_of_igs = []
@@ -109,12 +122,9 @@ def create_features(data_features_split):
         feature = dt.Feature(i, [])
         #go through each example to determine each value of feature
         for example in data_features_split:
-            #if no values currently
-            if not feature.values:
+            if example[i] not in feature.get_branches():
                 feature.add_branch(example[i])
-            #else if current value hasn't been seen before, add it to list
-            elif example[i] not in feature.values:
-                feature.add_branch(example[i])
+
         #after going through all of the examples, add feature object to list
         list_of_features.append(feature)
 
