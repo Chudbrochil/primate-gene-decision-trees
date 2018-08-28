@@ -14,7 +14,8 @@ import dt_math as dt_math
 
 def main():
     data = load_file("training.csv")
-    data_features_split = split_features(data)
+    partition_size = 2
+    data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
 
@@ -52,16 +53,15 @@ def get_classifications(class_list):
 
     return list_of_classes
 
-
-
-
-def split_features(data):
+""" splits string of features every nth character denoted by partition_size """
+def split_features(data, partition_size = 1):
     features = data[:, 1]
     matrix_of_features = []
 
-    for example in features:
-        split_feature = list(example) #convert string in column to characters
-        matrix_of_features.append(split_feature)
+    for sequence in features:
+        split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
+        print(split_sequence)
+        matrix_of_features.append(split_sequence)
 
     # Concatenation of features and the "output". Output also known as labels
     data_features_split = np.c_[matrix_of_features, data[:, 2]]
