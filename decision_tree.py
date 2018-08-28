@@ -6,8 +6,10 @@ class Feature():
         self.feature_index = feature_index
         self.branches = branches
 
-    def add_branch(self, branch):
-        self.branches.append(branch)
+    def add_branch(self, branch_value):
+        self.branches.append(Branch(branch_value))
+        #print("Added branch" + str(branch_value))
+        #self.branches.append(branch_value)
 
     def get_branches(self):
         return self.branches
@@ -19,3 +21,6 @@ class Branch():
     # What feature is this branch pointing to
     def add_child_feature(self, feature):
         self.child_feature = feature
+
+    def get_branch_name(self):
+        return self.branch_value

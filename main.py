@@ -27,29 +27,59 @@ def main():
     print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
     print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
 
-    simpleID3(data_features_split, list_of_classes, feature_objects)
+    ID3(data_features_split, list_of_classes, feature_objects)
 
-
-#TODO:
-#Make a function that looks at all features and picks highest information gained one...
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
-def simpleID3(data_features_split, list_of_classes, feature_objects):
+def ID3(data_features_split, list_of_classes, feature_objects):
+
+    if data_features_split is None:
+        return ""
+
+    # If all of the remaining examples have the same classification, return that classification
+    # This is the "base case"
+    initial_classification = None
+    found_different = False
+    for example in data_features_split:
+        classification = example[-1:]
+        if initial_classification is None:
+            initial_classification = classification
+        elif classification is not initial_classification:
+            found_different = True
+            break
+
+    # So instead of putting a feature as a child to a branch.
+    # We are putting a "leaf node", which is really just a string that
+    # represents a single classification. i.e. "IE" or "EI" or "N"
+    if found_different is False:
+        return classification
+
 
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
 
-    root = features_objects[highest_ig_feature_index]
+    node = feature_objects[highest_ig_feature_index]
 
     # For every possible branch(value). Should look like {A, C, G, T}
-    for branch in root.get_branches():
+    for branch in node.get_branches():
 
         # Gathering all examples that match this branch value
-        subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch, root) # TODO: Change root to make this recursive
+        subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch, node) # TODO: Change root to make this recursive
 
-        # If the examples list is not empty
-        if not subset_data_features_match:
-            
+        #print("subset_data_feature_match")
+        #print(subset_data_feature_match)
+
+
+        # If the examples list is empty
+        if not subset_data_feature_match:
+            # We found an "A" in column 29, all the other examples aren't "A". We would need to loop over
+            # all examples and return the most common classification. (IE, EI, N)
+            print("Not sure how we got here...\n\n")
+        else:
+            # Recurse
+            feature_objects[highest_ig_feature_index] = None
+
+            branch.add_child_feature(ID3(data_features_split, list_of_classes, feature_objects))
 
 
 
@@ -67,13 +97,14 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     highest_ig_index = -1
 
     for feature_index in range(length_of_data):
-        info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
-        print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
+        if feature_objects[feature_index] is not None:
+            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
+            print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
 
-        # Getting the highest info gained feature
-        if info_gained_entropy > highest_ig_num:
-            highest_ig_num = info_gained_entropy
-            highest_ig_index = feature_index
+            # Getting the highest info gained feature
+            if info_gained_entropy > highest_ig_num:
+                highest_ig_num = info_gained_entropy
+                highest_ig_index = feature_index
 
     print("Highest_ig_num: %f Highest_ig_index: %d" % (highest_ig_num, highest_ig_index))
 
@@ -114,6 +145,9 @@ def split_features(data, partition_size = 1):
 
     return data_features_split
 
+
+
+# TODO: Anallyze complexity of the big gnarly loop in this method
 def create_features(data_features_split):
     list_of_features = []
 
@@ -121,9 +155,28 @@ def create_features(data_features_split):
     for i in range(0, data_features_split.shape[1]):
         feature = dt.Feature(i, [])
         #go through each example to determine each value of feature
+
+        # For every entry of data, add a branch to a given feature if it isn't
+        # already in the list of branches
         for example in data_features_split:
-            if example[i] not in feature.get_branches():
+            example_value = example[i]
+
+            branch_list = feature.get_branches()
+
+            found_example_value = False
+
+            for branch in branch_list:
+                if branch.get_branch_name() is example_value:
+                    found_example_value = True
+                    break
+
+            if found_example_value == False:
                 feature.add_branch(example[i])
+
+
+            # for branch in feature.get_branches():
+            #     if branch.get_branch_name() is not example[i]:
+            #         feature.add_branch(branch.get_branch_name())
 
         #after going through all of the examples, add feature object to list
         list_of_features.append(feature)
