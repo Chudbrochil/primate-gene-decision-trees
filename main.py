@@ -64,7 +64,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     for branch in node.get_branches():
 
         # Gathering all examples that match this branch value
-        subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch, node) # TODO: Change root to make this recursive
+        subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
 
         #print("subset_data_feature_match")
         #print(subset_data_feature_match)
