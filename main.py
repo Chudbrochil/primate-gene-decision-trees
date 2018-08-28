@@ -54,6 +54,17 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     if found_different is False:
         return classification
 
+    #if there are no more features to look at, return with a leaf as the most common class
+    #this is really ugly, but since we're not removing things for the list, not much else to do
+    all_features_used = True
+    for feature in feature_objects:
+        if feature is not None:
+            all_features_used = False
+            break
+    #TODO determine the most popular classification
+    if all_features_used:
+        classification = "N"
+        return classification
 
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
@@ -99,7 +110,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     for feature_index in range(length_of_data):
         if feature_objects[feature_index] is not None:
             info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
-            print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
+            #print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
 
             # Getting the highest info gained feature
             if info_gained_entropy > highest_ig_num:
