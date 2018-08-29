@@ -17,7 +17,7 @@ class Feature():
 class Branch():
     def __init__(self, branch_value):
         self.branch_value = branch_value
-
+        
     # What feature is this branch pointing to
     def add_child_feature(self, feature):
         self.child_feature = feature

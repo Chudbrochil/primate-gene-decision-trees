@@ -27,7 +27,11 @@ def main():
     print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
     print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
 
-    ID3(data_features_split, list_of_classes, feature_objects)
+    decision_tree = ID3(data_features_split, list_of_classes, feature_objects)
+
+    for branch in decision_tree.get_branches():
+        print(branch.get_branch_name())
+        print("The child feature is " + str(branch.child_feature))
 
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
@@ -61,6 +65,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         if feature is not None:
             all_features_used = False
             break
+
     #TODO determine the most popular classification
     if all_features_used:
         classification = "N"
@@ -73,13 +78,9 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     # For every possible branch(value). Should look like {A, C, G, T}
     for branch in node.get_branches():
-
+        print("Dealing with branch " + str(branch.get_branch_name()))
         # Gathering all examples that match this branch value
         subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
-
-        #print("subset_data_feature_match")
-        #print(subset_data_feature_match)
-
 
         # If the examples list is empty
         if not subset_data_feature_match:
@@ -92,7 +93,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
             branch.add_child_feature(ID3(data_features_split, list_of_classes, feature_objects))
 
-
+    return node
 
 
 
@@ -163,7 +164,7 @@ def create_features(data_features_split):
     list_of_features = []
 
     #go through each feature in data
-    for i in range(0, data_features_split.shape[1]):
+    for i in range(0, data_features_split.shape[1]-1):
         feature = dt.Feature(i, [])
         #go through each example to determine each value of feature
 
@@ -182,6 +183,7 @@ def create_features(data_features_split):
                     break
 
             if found_example_value == False:
+                print(example[i])
                 feature.add_branch(example[i])
 
 
