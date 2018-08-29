@@ -13,7 +13,7 @@ import decision_tree as dt
 import dt_math as dt_math
 
 def main():
-    data = load_file("training.csv")
+    data = load_file("boolean.csv")
     partition_size = 1
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
@@ -29,9 +29,16 @@ def main():
 
     decision_tree = ID3(data_features_split, list_of_classes, feature_objects)
 
+    """ printing decision tree for boolean data """
     for branch in decision_tree.get_branches():
         print(branch.get_branch_name())
         print("The child feature is " + str(branch.child_feature))
+
+        if type(branch.child_feature) is not str:
+            for sub_branch in branch.child_feature.get_branches():
+                print("Child branches: " + str(sub_branch.get_branch_name()))
+                print("Child feature is " + str(sub_branch.child_feature))
+
 
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
@@ -46,9 +53,12 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     found_different = False
     for example in data_features_split:
         classification = example[-1:]
+        print("Classification : " + str(classification))
         if initial_classification is None:
             initial_classification = classification
         elif classification is not initial_classification:
+            print("found different classification")
+            print("Classification : " + str(classification) + " initial class = " + str(initial_classification))
             found_different = True
             break
 
@@ -58,7 +68,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     if found_different is False:
         return classification
 
-    #if there are no more features to look at, return with a leaf as the most common class
+    #if there are no more features to look at, return with a leaf of the most common class
     #this is really ugly, but since we're not removing things for the list, not much else to do
     all_features_used = True
     for feature in feature_objects:
@@ -68,7 +78,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     #TODO determine the most popular classification
     if all_features_used:
-        classification = "N"
+        classification = "1"
         return classification
 
     # "The attribute from Attributes that best* classifies Examples"
@@ -78,7 +88,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     # For every possible branch(value). Should look like {A, C, G, T}
     for branch in node.get_branches():
-        print("Dealing with branch " + str(branch.get_branch_name()))
+        #print("Dealing with branch " + str(branch.get_branch_name()))
         # Gathering all examples that match this branch value
         subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
 
@@ -91,7 +101,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
             # Recurse
             feature_objects[highest_ig_feature_index] = None
 
-            branch.add_child_feature(ID3(data_features_split, list_of_classes, feature_objects))
+            branch.add_child_feature(ID3(subset_data_feature_match, list_of_classes, feature_objects))
 
     return node
 
@@ -103,7 +113,10 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     list_of_igs = []
 
     # Getting how many characters long each example is
-    length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
+    if type(data_features_split) is list:
+        length_of_data = len(data_features_split)
+    else:
+        length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
 
     highest_ig_num = 0.0
     highest_ig_index = -1
