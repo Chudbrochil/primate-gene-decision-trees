@@ -68,7 +68,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
     # We are putting a "leaf node", which is really just a string that
     # represents a single classification. i.e. "IE" or "EI" or "N"
     if found_different is False:
-        print("All classifcations are the same")
+        print("Leaf value: " + str(classification))
         return classification
 
     #if there are no more features to look at, return with a leaf of the most common class
@@ -107,7 +107,13 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
         else:
             # Recurse
             feature_objects[highest_ig_feature_index] = None
-            branch.add_child_feature(ID3(subset_data_feature_match, list_of_classes, feature_objects, current_feature_hierarchy))
+            child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects, current_feature_hierarchy)
+            #child feature is going to be a classification, not a feature!
+            if type(child_feature) is str:
+                print("Leaf value was returned: " + str(child_feature))
+                current_feature_hierarchy.append(child_feature)
+
+            branch.add_child_feature(child_feature)
 
     return node
 
