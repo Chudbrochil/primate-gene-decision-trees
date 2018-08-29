@@ -58,7 +58,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
 
         if initial_classification is None:
             initial_classification = classification
-            
+
         #note: is not DOESNT EQUAL != ... bad bad bug
         elif classification != initial_classification:
             found_different = True
@@ -68,6 +68,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
     # We are putting a "leaf node", which is really just a string that
     # represents a single classification. i.e. "IE" or "EI" or "N"
     if found_different is False:
+        print("All classifcations are the same")
         return classification
 
     #if there are no more features to look at, return with a leaf of the most common class
@@ -80,6 +81,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
 
     #TODO determine the most popular classification
     if all_features_used:
+        print("All features have been used, returning most common class")
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
 
@@ -101,6 +103,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
             # all examples and return the most common classification. (IE, EI, N)
             most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
             branch.add_child_feature(most_common_class)
+            current_feature_hierarchy.append(most_common_class)
         else:
             # Recurse
             feature_objects[highest_ig_feature_index] = None

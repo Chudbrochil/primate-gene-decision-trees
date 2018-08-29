@@ -69,7 +69,6 @@ def determine_class_totals(examples, classes, get_most_common_class = False):
                 label_totals["class" + str(i)] = label_totals["class" + str(i)] + 1
                 break
 
-
     most_common_class_amount = 0
     most_common_class = ""
     if get_most_common_class:
