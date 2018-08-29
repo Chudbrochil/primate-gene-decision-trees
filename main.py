@@ -27,7 +27,7 @@ def main():
     print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
     print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
 
-    decision_tree = ID3(data_features_split, list_of_classes, feature_objects)
+    decision_tree = ID3(data_features_split, list_of_classes, feature_objects, [])
 
     """ printing decision tree for boolean data """
     # for branch in decision_tree.get_branches():
@@ -42,7 +42,7 @@ def main():
 
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
-def ID3(data_features_split, list_of_classes, feature_objects):
+def ID3(data_features_split, list_of_classes, feature_objects, current_feature_hierarchy):
 
     #no examples left
     if data_features_split.shape[0] == 0:
@@ -54,12 +54,17 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     found_different = False
     for example in data_features_split:
         classification = example[-1:]
+        # if(data_features_split.shape[0] == 22):
+        #     print("current class = " + str(classification))
         #print("Classification : " + str(classification))
         if initial_classification is None:
             initial_classification = classification
-        elif classification is not initial_classification:
+        #note: is not DOESNT EQUAL != ... bad bad bug
+        elif classification != initial_classification:
             #print("found different classification")
             #print("Classification : " + str(classification) + " initial class = " + str(initial_classification))
+            # if(data_features_split.shape[0] == 22):
+            #     print("current class wasn't initial" + str(classification))
             found_different = True
             break
 
@@ -79,16 +84,13 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     #TODO determine the most popular classification
     if all_features_used:
-        classification = "1"
+        classification = "N"
         return classification
 
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
-
-    #TODO something is breaking, and all info gain becomes zero! This could be a bug, it's hard to tell...
-    # for now, if no info gain is acquired, we will return. Still think is bug though.
-    if highest_ig_num == 0:
-        return ""
+    current_feature_hierarchy.append(highest_ig_feature_index)
+    print("current_feature_hierarchy = " + str(current_feature_hierarchy))
 
     node = feature_objects[highest_ig_feature_index]
 
@@ -97,7 +99,11 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         #print("Dealing with branch " + str(branch.get_branch_name()))
         # Gathering all examples that match this branch value, returns a numpy matrix
         subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
-        print("Subset size for current branch (value) :" + str(subset_data_feature_match.shape))
+
+        # print("Subset size for current branch (value) :" + str(subset_data_feature_match.shape))
+        # if subset_data_feature_match.shape[0] == 22:
+        #     for example in subset_data_feature_match:
+        #         print(example)
 
         # If the examples list is empty
         if subset_data_feature_match.shape[0] == 0:
@@ -107,7 +113,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         else:
             # Recurse
             feature_objects[highest_ig_feature_index] = None
-            branch.add_child_feature(ID3(subset_data_feature_match, list_of_classes, feature_objects))
+            branch.add_child_feature(ID3(subset_data_feature_match, list_of_classes, feature_objects, current_feature_hierarchy))
 
     return node
 
@@ -120,7 +126,6 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
     # Getting how many characters long each example is
     length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
-    print("length of data " + str(length_of_data))
 
     highest_ig_num = 0.0
     highest_ig_index = -1

@@ -13,8 +13,8 @@ def entropy(examples, classes):
     total_examples = len(examples)
     numOfClasses = len(classes)
 
-    #TODO This is saving a divide by zero case, might need to double check if this is the right thing to do
-    if(total_examples == 0):
+    if total_examples == 0:
+        #print("total examples = 0")
         return 0
 
     #determine each unique class and count how many times each is in set of examples
@@ -75,20 +75,22 @@ def determine_class_totals(examples, classes):
    feature - an object... with this features column index in the
    dataset and needs to have a list of it's values....
 """
-#TODO DETERMINE IF FEATURE BEING PASSED INTO GAIN SHOULD BE AN OBJECT
 def gain(examples, feature, classes, impurity_func):
-
     #determine impurity of entire dataset
     gain = impurity_func(examples, classes)
 
-    # for branch in feature.get_branches():
-    #     print(branch.get_branch_name())
+    #print("entropy of entire set: " + str(gain))
 
     #determine impurity for each value in feature, sum together and return info gain
     for branch in feature.get_branches():
 
         #return subset of examples that only have this value
         subset_of_example = get_example_matching_value(examples, branch.get_branch_name(), feature)
+
+        # if(examples.shape[0] == 22):
+        #     print(subset_of_example.shape)
+        #print("shape of subset of a value for this feature" + str(subset_of_example.shape))
+
         total_subset_of_value = len(subset_of_example)
 
         #math of information gain
