@@ -143,6 +143,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
             if feature_objects[feature_index] is not None:
                 print("Highest_ig_num was 0, returning random feature index: " + str(feature_index))
                 highest_ig_index = feature_index
+                break
 
     # Outputting the index of the feature that has the highest info gained
     return highest_ig_index, highest_ig_num

@@ -89,7 +89,6 @@ def gain(examples, feature, classes, impurity_func):
 
         #return subset of examples that only have this value
         subset_of_example = get_example_matching_value(examples, branch.get_branch_name(), feature)
-        print(subset_of_example.shape)
         total_subset_of_value = len(subset_of_example)
 
         #math of information gain
