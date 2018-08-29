@@ -13,7 +13,7 @@ import decision_tree as dt
 import dt_math as dt_math
 
 def main():
-    data = load_file("boolean.csv")
+    data = load_file("training.csv")
     partition_size = 1
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
@@ -30,21 +30,22 @@ def main():
     decision_tree = ID3(data_features_split, list_of_classes, feature_objects)
 
     """ printing decision tree for boolean data """
-    for branch in decision_tree.get_branches():
-        print(branch.get_branch_name())
-        print("The child feature is " + str(branch.child_feature))
-
-        if type(branch.child_feature) is not str:
-            for sub_branch in branch.child_feature.get_branches():
-                print("Child branches: " + str(sub_branch.get_branch_name()))
-                print("Child feature is " + str(sub_branch.child_feature))
+    # for branch in decision_tree.get_branches():
+    #     print(branch.get_branch_name())
+    #     print("The child feature is " + str(branch.child_feature))
+    #
+    #     if type(branch.child_feature) is not str:
+    #         for sub_branch in branch.child_feature.get_branches():
+    #             print("Child branches: " + str(sub_branch.get_branch_name()))
+    #             print("Child feature is " + str(sub_branch.child_feature))
 
 
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects):
 
-    if data_features_split is None:
+    #no examples left
+    if data_features_split.shape[0] == 0:
         return ""
 
     # If all of the remaining examples have the same classification, return that classification
@@ -53,12 +54,12 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     found_different = False
     for example in data_features_split:
         classification = example[-1:]
-        print("Classification : " + str(classification))
+        #print("Classification : " + str(classification))
         if initial_classification is None:
             initial_classification = classification
         elif classification is not initial_classification:
-            print("found different classification")
-            print("Classification : " + str(classification) + " initial class = " + str(initial_classification))
+            #print("found different classification")
+            #print("Classification : " + str(classification) + " initial class = " + str(initial_classification))
             found_different = True
             break
 
@@ -82,25 +83,30 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         return classification
 
     # "The attribute from Attributes that best* classifies Examples"
-    highest_ig_feature_index = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
+    highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
+
+    #TODO something is breaking, and all info gain becomes zero! This could be a bug, it's hard to tell...
+    # for now, if no info gain is acquired, we will return. Still think is bug though.
+    if highest_ig_num == 0:
+        return ""
 
     node = feature_objects[highest_ig_feature_index]
 
     # For every possible branch(value). Should look like {A, C, G, T}
     for branch in node.get_branches():
         #print("Dealing with branch " + str(branch.get_branch_name()))
-        # Gathering all examples that match this branch value
+        # Gathering all examples that match this branch value, returns a numpy matrix
         subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
+        print("Subset size for current branch (value) :" + str(subset_data_feature_match.shape))
 
         # If the examples list is empty
-        if not subset_data_feature_match:
+        if subset_data_feature_match.shape[0] == 0:
             # We found an "A" in column 29, all the other examples aren't "A". We would need to loop over
             # all examples and return the most common classification. (IE, EI, N)
             print("Not sure how we got here...\n\n")
         else:
             # Recurse
             feature_objects[highest_ig_feature_index] = None
-
             branch.add_child_feature(ID3(subset_data_feature_match, list_of_classes, feature_objects))
 
     return node
@@ -113,10 +119,8 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     list_of_igs = []
 
     # Getting how many characters long each example is
-    if type(data_features_split) is list:
-        length_of_data = len(data_features_split)
-    else:
-        length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
+    length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
+    print("length of data " + str(length_of_data))
 
     highest_ig_num = 0.0
     highest_ig_index = -1
@@ -124,7 +128,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     for feature_index in range(length_of_data):
         if feature_objects[feature_index] is not None:
             info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
-            #print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
+            print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
 
             # Getting the highest info gained feature
             if info_gained_entropy > highest_ig_num:
@@ -133,8 +137,15 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
     print("Highest_ig_num: %f Highest_ig_index: %d" % (highest_ig_num, highest_ig_index))
 
+    #if highest info gain is 0, return arbitrary index
+    if highest_ig_num == 0:
+        for feature_index in range(length_of_data):
+            if feature_objects[feature_index] is not None:
+                print("Highest_ig_num was 0, returning random feature index: " + str(feature_index))
+                highest_ig_index = feature_index
+
     # Outputting the index of the feature that has the highest info gained
-    return highest_ig_index
+    return highest_ig_index, highest_ig_num
 
 
 def load_file(file_name):
@@ -185,9 +196,7 @@ def create_features(data_features_split):
         # already in the list of branches
         for example in data_features_split:
             example_value = example[i]
-
             branch_list = feature.get_branches()
-
             found_example_value = False
 
             for branch in branch_list:
@@ -196,8 +205,7 @@ def create_features(data_features_split):
                     break
 
             if found_example_value == False:
-                print(example[i])
-                feature.add_branch(example[i])
+                feature.add_branch(example_value)
 
 
             # for branch in feature.get_branches():

@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 """ Caclulates entropy on current set of examples.
     Used for the entire dataset and each value of a feature.
@@ -9,12 +10,15 @@ import math
 def entropy(examples, classes):
 
     entropy = 0
+    total_examples = len(examples)
+    numOfClasses = len(classes)
+
+    #TODO This is saving a divide by zero case, might need to double check if this is the right thing to do
+    if(total_examples == 0):
+        return 0
 
     #determine each unique class and count how many times each is in set of examples
     label_totals = determine_class_totals(examples, classes)
-
-    total_examples = len(examples)
-    numOfClasses = len(classes)
 
     #calculate entropy now that proportions are known (p_i)
     for i in range(numOfClasses):
@@ -77,11 +81,15 @@ def gain(examples, feature, classes, impurity_func):
     #determine impurity of entire dataset
     gain = impurity_func(examples, classes)
 
+    # for branch in feature.get_branches():
+    #     print(branch.get_branch_name())
+
     #determine impurity for each value in feature, sum together and return info gain
     for branch in feature.get_branches():
 
         #return subset of examples that only have this value
         subset_of_example = get_example_matching_value(examples, branch.get_branch_name(), feature)
+        print(subset_of_example.shape)
         total_subset_of_value = len(subset_of_example)
 
         #math of information gain
@@ -90,7 +98,6 @@ def gain(examples, feature, classes, impurity_func):
         gain = gain - subset_entropy
 
     return gain
-
 
 def get_example_matching_value(examples, branch_name, feature):
     subset_of_value = []
@@ -101,4 +108,6 @@ def get_example_matching_value(examples, branch_name, feature):
         if(example[feature.feature_index] is branch_name):
             subset_of_value.append(example)
 
+    #convert subset to np matrix so we can use .shape
+    subset_of_value = np.array(subset_of_value)
     return subset_of_value
