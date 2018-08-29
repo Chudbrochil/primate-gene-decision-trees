@@ -46,7 +46,8 @@ def gni_index(examples, classes):
 
     return gni
 
-def determine_class_totals(examples, classes):
+#TODO can easily replace dictionaries with list if preferred
+def determine_class_totals(examples, classes, get_most_common_class = False):
     labels = {}
     label_totals = {}
 
@@ -68,7 +69,17 @@ def determine_class_totals(examples, classes):
                 label_totals["class" + str(i)] = label_totals["class" + str(i)] + 1
                 break
 
-    return label_totals
+
+    most_common_class_amount = 0
+    most_common_class = ""
+    if get_most_common_class:
+        for i in range(numOfClasses):
+            if label_totals["class" + str(i)] > most_common_class_amount:
+                most_common_class_amount = label_totals["class" + str(i)]
+                most_common_class = labels["class" + str(i)]
+        return most_common_class
+    else:
+        return label_totals
 
 """ Gain calculates the information gain of each feature on current passed in examples
    gain(data, A) -> will look through values Y & Z for feature A.
