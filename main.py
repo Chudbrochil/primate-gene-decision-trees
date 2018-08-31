@@ -11,6 +11,7 @@ import math
 import numpy as np
 import decision_tree as dt
 import dt_math as dt_math
+import queue
 
 def main():
     data = load_file("training.csv")
@@ -29,6 +30,8 @@ def main():
 
     decision_tree = ID3(data_features_split, list_of_classes, feature_objects, [])
 
+    traverse_tree(decision_tree)
+
     """ printing decision tree for boolean data """
     # for branch in decision_tree.get_branches():
     #     print(branch.get_branch_name())
@@ -38,8 +41,6 @@ def main():
     #         for sub_branch in branch.child_feature.get_branches():
     #             print("Child branches: " + str(sub_branch.get_branch_name()))
     #             print("Child feature is " + str(sub_branch.child_feature))
-
-
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects, current_feature_hierarchy):
@@ -68,7 +69,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
     # We are putting a "leaf node", which is really just a string that
     # represents a single classification. i.e. "IE" or "EI" or "N"
     if found_different is False:
-        print("Leaf value: " + str(classification))
+        #print("Leaf value: " + str(classification))
         return classification
 
     #if there are no more features to look at, return with a leaf of the most common class
@@ -81,14 +82,14 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
 
     #TODO determine the most popular classification
     if all_features_used:
-        print("All features have been used, returning most common class")
+        #print("All features have been used, returning most common class")
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
 
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
     current_feature_hierarchy.append(highest_ig_feature_index)
-    print("current_feature_hierarchy = " + str(current_feature_hierarchy))
+    #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
 
     node = feature_objects[highest_ig_feature_index]
 
@@ -110,7 +111,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
             child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects, current_feature_hierarchy)
             #child feature is going to be a classification, not a feature!
             if type(child_feature) is str:
-                print("Leaf value was returned: " + str(child_feature))
+                #print("Leaf value was returned: " + str(child_feature))
                 current_feature_hierarchy.append(child_feature)
 
             branch.add_child_feature(child_feature)
@@ -211,7 +212,6 @@ def create_features(data_features_split):
             if found_example_value == False:
                 feature.add_branch(example_value)
 
-
             # for branch in feature.get_branches():
             #     if branch.get_branch_name() is not example[i]:
             #         feature.add_branch(branch.get_branch_name())
@@ -221,5 +221,33 @@ def create_features(data_features_split):
 
     return list_of_features
 
+#a breadth first like algorithm to go through the decision tree
+def traverse_tree(decision_tree):
+    q = queue.Queue()
+
+    #insert root feature into queue
+    q.put(decision_tree)
+
+    while not q.empty():
+        v = q.get()
+
+        if type(v) is dt.Feature:
+            print("\nFeature: " + str(v.feature_index))
+
+            for branch in v.get_branches():
+                print(branch.get_branch_name() + " ", end='')
+                q.put(branch)
+            print("")
+        elif type(v) is dt.Branch:
+            print("\nValue:" + str(v.get_branch_name()))
+
+            if type(v.child_feature) is str or type(v.child_feature) is np.ndarray:
+                print("---> Leaf: " + str(v.child_feature))
+            elif type(v.child_feature) is dt.Feature:
+                print("---> Child Feature: " + str(v.child_feature.feature_index))
+
+            q.put(v.child_feature)
+        elif type(v) is str:
+            print("Leaf: " + str(v))
 
 main()
