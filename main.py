@@ -91,7 +91,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
 
     current_feature = feature_objects[highest_ig_num]
     #determine if this feature will be of statistical benefit using chi-square
-    feature_is_beneficial = chi_square_test()
+    feature_is_beneficial = True #chi_square_test()
 
     #if the feature is not beneficial, return a leaf node of the most popular class
     if not feature_is_beneficial:
