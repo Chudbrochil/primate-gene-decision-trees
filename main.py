@@ -89,14 +89,14 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
 
-    current_feature = feature_objects[highest_ig_num]
+    #current_feature = feature_objects[highest_ig_num]
     #determine if this feature will be of statistical benefit using chi-square
-    feature_is_beneficial = True #chi_square_test()
-
-    #if the feature is not beneficial, return a leaf node of the most popular class
-    if not feature_is_beneficial:
-        most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
-        return most_common_class
+    # feature_is_beneficial = True #chi_square_test()
+    #
+    # #if the feature is not beneficial, return a leaf node of the most popular class
+    # if not feature_is_beneficial:
+    #     most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
+    #     return most_common_class
 
     current_feature_hierarchy.append(highest_ig_feature_index)
     #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
@@ -185,7 +185,7 @@ def chi_square_test(data, current_feature, list_of_classes, class_totals):
 
 #TODO: determine how to computer critical value, mainly how loading in Chi-Square table...
 def computer_critical_value(degree_of_freedom, confidence_level):
-
+    return 1
 
 # Obtaining the highest information gain feature index from the remaining list of features
 def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
