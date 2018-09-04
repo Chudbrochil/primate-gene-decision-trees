@@ -89,14 +89,14 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
 
-    #current_feature = feature_objects[highest_ig_num]
+    current_feature = feature_objects[highest_ig_feature_index]
     #determine if this feature will be of statistical benefit using chi-square
-    # feature_is_beneficial = True #chi_square_test()
-    #
-    # #if the feature is not beneficial, return a leaf node of the most popular class
-    # if not feature_is_beneficial:
-    #     most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
-    #     return most_common_class
+    feature_is_beneficial = chi_square_test(data_features_split, current_feature, list_of_classes)
+
+    #if the feature is not beneficial, return a leaf node of the most popular class
+    if not feature_is_beneficial:
+        most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
+        return most_common_class
 
     current_feature_hierarchy.append(highest_ig_feature_index)
     #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
@@ -128,54 +128,58 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
 
     return node
 
-
-""" BELOW FUNCTION IS CURRENTLY NOT TESTED """
-def chi_square_test(data, current_feature, list_of_classes, class_totals):
+def chi_square_test(data, current_feature, list_of_classes):
+    class_totals = dt_math.determine_class_totals(data, list_of_classes, False)
 
     """ build table of real and expected values for current feature """
     total_data_size = len(data) #TODO: might have to take only 1st dimension of data
+
     #build a matrix the dimensions of, (total_values_for_feature, total_classes)
-    variable_matrix_real = [[0 for x in range(len(current_feature.get_branches()))] for y in range(len(class_totals))]
+    variable_matrix_real = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
+    variable_matrix_expected = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
 
-    variable_matrix_expected = [[0 for x in range(len(current_feature.get_branches()))] for y in range(len(class_totals))]
-
-
-    #determine class totals for each value of this feature
+    #determine "real values" for each value and class of this feature
     counter = 0
     for branch in current_feature.get_branches():
+        #returns subset of data matching the current value of this feature
         subset_data_feature_match = dt_math.get_example_matching_value(data, branch.get_branch_name(), current_feature)
 
+        #returns a dictionary of totals of each class for this value of this feature
         class_totals_for_subvalue = dt_math.determine_class_totals(subset_data_feature_match, list_of_classes, False)
 
-        #fill variable_matrix_real with class totals for this current branch (value)
-        for j in range(variable_matrix_real.shape[1]):
-            variable_matrix_real[counter][j] = class_totals_for_subvalue[j]
+        #fill variable_matrix_real with class totals for this current branch
+        for j in range(0, len(class_totals_for_subvalue)):
+            variable_matrix_real[counter][j] = class_totals_for_subvalue["class" + str(j)]
         counter += 1
 
     #calculate expected values
     counter = 0
     for branch in current_feature.get_branches():
         subset_data_feature_match = dt_math.get_example_matching_value(data, branch.get_branch_name(), current_feature)
+
         total_subset_size = len(subset_data_feature_match)
 
         class_totals_for_subvalue = dt_math.determine_class_totals(subset_data_feature_match, list_of_classes, False)
 
-        expected = total_subset_size * (class_totals[counter] / total_data_size)
-
-        for j in range(variable_matrix_expected.shape[1]):
-            variable_matrix_expected[counter][j] = total_subset_size * (class_totals[j] / total_examples)
+        for j in range(len(class_totals_for_subvalue)):
+            variable_matrix_expected[counter][j] = total_subset_size * (class_totals["class" + str(j)] / total_data_size)
+        counter += 1
 
     chi_square_value = 0
     """ run chi-square function over built table """
     #for every class compute the different values chi square
-    for i in range(len(class_totals)):
-        for j in range(len(current_feature.get_branches())):
+    for i in range(len(current_feature.get_branches())):
+        for j in range(len(class_totals)):
+            if variable_matrix_expected[i][j] == 0:
+                continue
             chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
 
-    """ determine if chi-square value if in or out of distrubution """
-    degree_of_freedom = (len(total_classes) - 1)  * (len(current_feature.get_branches) - 1)
+    print("Chi-square value: " + str(chi_square_value))
 
-    critical_value = compute_critical_value(degree_of_freedom, confidence_level)
+    """ determine if chi-square value if in or out of distrubution """
+    degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
+
+    critical_value = compute_critical_value(degree_of_freedom, .95)
 
     if chi_square_value < critical_value:
         return False
@@ -184,7 +188,7 @@ def chi_square_test(data, current_feature, list_of_classes, class_totals):
 
 
 #TODO: determine how to computer critical value, mainly how loading in Chi-Square table...
-def computer_critical_value(degree_of_freedom, confidence_level):
+def compute_critical_value(degree_of_freedom, confidence_level):
     return 1
 
 # Obtaining the highest information gain feature index from the remaining list of features
