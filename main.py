@@ -27,15 +27,17 @@ def main():
     decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
 
     # Doing testing data now
-    testing_data = load_file("testing.csv")
+    testing_data = load_file("testing.csv", None)
     test_features_split = split_features(testing_data, partition_size, False)
 
-    testing_predictions = predict(decision_tree, test_features_split[:,:], 1)
+    print(test_features_split)
+
+    testing_predictions = predict(decision_tree, test_features_split[:,:], 2001)
 
     output_data(testing_predictions, "testing-1.csv")
 
 
-    # VALIDATION IS HERE
+    # VALIDATION IS HERE, TODO: DON'T DELETE
     # TODO: This only goes to 1598 because we are doing "validation data"
     # decision_tree = ID3(data_features_split[:1598, :], list_of_classes, feature_objects)
     #
@@ -64,7 +66,10 @@ def main():
 
 def output_data(predictions, file_name):
     file = open(file_name, "w")
+    file.write("ID,Class\n")
     for tuple in predictions:
+        #print("Tuple incoming")
+        #print(tuple)
         file.write(str(tuple[1]) + "," + str(tuple[0]) + "\n")
 
     file.close()
@@ -97,10 +102,22 @@ def predict(decision_tree, data, data_index):
                 #if the child feature is not a leaf
                 else:
                     node = branch.child_feature
-                    predictions.append(recursive_prediction_traversal(example, node, data_index))
+                    recursive_prediction = recursive_prediction_traversal(example, node, data_index)
+                    if recursive_prediction == None:
+                        print(data_index)
+                        traverse_tree(node)
+
+                        #print("Found a none prediction")
+
+                        #print(decision_tree)
+                    predictions.append(recursive_prediction)
                     node = decision_tree
                     data_index += 1
                     break
+
+
+    for prediction in predictions:
+        print(prediction)
 
     return predictions
 
@@ -172,7 +189,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
         return most_common_class
 
-    """
+
     current_feature = feature_objects[highest_ig_feature_index]
     #determine if this feature will be of statistical benefit using chi-square
     feature_is_beneficial = chi_square_test(data_features_split, current_feature, list_of_classes)
@@ -184,7 +201,6 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
 
-    """
     node = feature_objects_copy[highest_ig_feature_index]
     feature_objects_copy[highest_ig_feature_index] = "None"
 
@@ -241,9 +257,9 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     return highest_ig_index, highest_ig_num
 
 
-def load_file(file_name):
+def load_file(file_name, header_size = 1):
 
-    file = pd.read_csv(file_name)
+    file = pd.read_csv(file_name, header = header_size)
     data = file.values
 
     return data
@@ -269,11 +285,14 @@ def split_features(data, partition_size = 1, is_training = True):
         split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
         matrix_of_features.append(split_sequence)
 
+    #print(np.c_[matrix_of_features, data[:, 2]])
+    #print(np.c_[matrix_of_features])
+
     # Concatenation of features and the "output". Output also known as labels
     if is_training == True:
         return np.c_[matrix_of_features, data[:, 2]]
     else:
-        return matrix_of_features
+        return np.c_[matrix_of_features]
 
 
 
@@ -321,19 +340,19 @@ def traverse_tree(decision_tree):
         v = q.get()
 
         if type(v) is dt.Feature:
-            #print("\nFeature: " + str(v.feature_index))
+            print("\nFeature: " + str(v.feature_index))
 
             for branch in v.get_branches():
                 #print(branch.get_branch_name() + " ", end='')
                 q.put(branch)
             #print("")
         elif type(v) is dt.Branch:
-            # print("\nValue:" + str(v.get_branch_name()))
-            #
-            # if type(v.child_feature) is str or type(v.child_feature) is np.ndarray:
-            #     print("---> Leaf: " + str(v.child_feature))
-            # elif type(v.child_feature) is dt.Feature:
-            #     print("---> Child Feature: " + str(v.child_feature.feature_index))
+            print("\nValue:" + str(v.get_branch_name()))
+
+            if type(v.child_feature) is str or type(v.child_feature) is np.ndarray:
+                print("---> Leaf: " + str(v.child_feature))
+            elif type(v.child_feature) is dt.Feature:
+                print("---> Child Feature: " + str(v.child_feature.feature_index))
 
             q.put(v.child_feature)
         #elif type(v) is str:
@@ -390,16 +409,13 @@ def chi_square_test(data, current_feature, list_of_classes):
     """ determine if chi-square value if in or out of distrubution """
     degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
 
-    critical_value = compute_critical_value(degree_of_freedom, .95)
+    #critical_value = compute_critical_value(degree_of_freedom, .95)
+    critical_value = dt_math.chi_square[degree_of_freedom][0.05]
 
     if chi_square_value < critical_value:
         return False
     else:
         return True
 
-
-#TODO: determine how to computer critical value, mainly how loading in Chi-Square table...
-def compute_critical_value(degree_of_freedom, confidence_level):
-    return 1
 
 main()
