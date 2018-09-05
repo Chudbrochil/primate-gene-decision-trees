@@ -24,12 +24,11 @@ def entropy(examples, classes):
     for i in range(numOfClasses):
         p_i = label_totals["class" + str(i)] / total_examples
         if p_i != 0:
-            entropy = entropy - p_i * math.log(p_i, 2)
+            entropy = entropy - (p_i * math.log(p_i, 2))
 
     return entropy
 
 def gni_index(examples, classes):
-
     gni = 1
 
     #determine each unique class and count how many times each is in set of examples
@@ -71,6 +70,7 @@ def determine_class_totals(examples, classes, get_most_common_class = False):
 
     most_common_class_amount = 0
     most_common_class = ""
+
     if get_most_common_class:
         for i in range(numOfClasses):
             if label_totals["class" + str(i)] > most_common_class_amount:

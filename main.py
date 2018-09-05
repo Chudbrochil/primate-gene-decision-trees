@@ -114,7 +114,7 @@ def recursive_prediction_traversal(single_example, node, data_index):
                 return recursive_prediction_traversal(single_example, node, data_index)
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
-def ID3(data_features_split, list_of_classes, feature_objects, current_feature_hierarchy):
+def ID3(data_features_split, list_of_classes, feature_objects):
 
     #no examples left
     if data_features_split.shape[0] == 0:
@@ -157,9 +157,12 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
 
+
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
 
+
+    """ chi-square code
     current_feature = feature_objects[highest_ig_feature_index]
     #determine if this feature will be of statistical benefit using chi-square
     feature_is_beneficial = chi_square_test(data_features_split, current_feature, list_of_classes)
@@ -169,9 +172,8 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
 
-    current_feature_hierarchy.append(highest_ig_feature_index)
     #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
-
+    """
     node = feature_objects[highest_ig_feature_index]
 
     # For every possible branch(value). Should look like {A, C, G, T}
@@ -185,15 +187,10 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
             # all examples and return the most common classification. (IE, EI, N)
             most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
             branch.add_child_feature(most_common_class)
-            current_feature_hierarchy.append(most_common_class)
         else:
             # Recurse
             feature_objects[highest_ig_feature_index] = None
-            child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects, current_feature_hierarchy)
-            #child feature is going to be a classification, not a feature!
-            if type(child_feature) is str:
-                #print("Leaf value was returned: " + str(child_feature))
-                current_feature_hierarchy.append(child_feature)
+            child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects)
 
             branch.add_child_feature(child_feature)
 
