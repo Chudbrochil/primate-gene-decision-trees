@@ -1,6 +1,11 @@
 import math
 import numpy as np
 
+chi_square = [0, {0.05 : 3.84, 0.01 : 6.63}, {0.05 : 5.99, 0.01 : 9.21},
+{0.05 : 7.81, 0.01 : 11.34}, {0.05 : 9.49, 0.01 : 13.28}, {0.05 : 11.07, 0.01 : 15.09},
+{0.05 : 12.59, 0.01 : 16.81}, {0.05 : 14.07, 0.01 : 18.48}, {0.05 : 15.51, 0.01 : 20.09},
+{0.05 : 16.92, 0.01 : 21.67}, {0.05 : 18.31, 0.01 : 23.21}]
+
 """ Caclulates entropy on current set of examples.
     Used for the entire dataset and each value of a feature.
     examples - the dataset containing features and labels.

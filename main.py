@@ -14,7 +14,10 @@ import dt_math as dt_math
 import queue
 import copy
 
+
+
 def main():
+    
     data = load_file("training.csv")
     partition_size = 1
     data_features_split = split_features(data, partition_size)
