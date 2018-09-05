@@ -32,6 +32,9 @@ def main():
 
     traverse_tree(decision_tree)
 
+    predictions = predict(decision_tree, data_features_split[100:120, :])
+    print(predictions)
+
     """ printing decision tree for boolean data """
     # for branch in decision_tree.get_branches():
     #     print(branch.get_branch_name())
@@ -41,6 +44,33 @@ def main():
     #         for sub_branch in branch.child_feature.get_branches():
     #             print("Child branches: " + str(sub_branch.get_branch_name()))
     #             print("Child feature is " + str(sub_branch.child_feature))
+
+
+def predict(decision_tree, data):
+    predictions = []
+    node = decision_tree
+    for example in data:
+
+        current_feature_data = example[node.feature_index]
+
+        for branch in node.get_branches():
+
+            if current_feature_data == branch.branch_value:
+
+                if type(branch.child_feature) is not dt.Feature:
+
+                    if type(branch.child_feature) is not str:
+                        temp_prediction = branch.child_feature[0]
+                    else:
+                        temp_prediction = branch.child_feature
+
+                    predictions.append(temp_prediction)
+                    break
+                    
+                else:
+                    node = branch.child_feature
+
+    return predictions
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects, current_feature_hierarchy):
@@ -108,7 +138,7 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
         # Gathering all examples that match this branch value, returns a numpy matrix
         subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
 
-        # If the examples list is empty
+        # If the examples list is empty(ie., there are no examples left that have this value after trimming so many subsets)
         if subset_data_feature_match.shape[0] == 0:
             # We found an "A" in column 29, all the other examples aren't "A". We would need to loop over
             # all examples and return the most common classification. (IE, EI, N)
