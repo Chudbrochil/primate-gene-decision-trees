@@ -15,55 +15,59 @@ import queue
 import copy
 
 
-
 def main():
-    
+
     data = load_file("training.csv")
     partition_size = 1
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
 
-    print("Classifications found: " + str(list_of_classes))
 
-    info_gain_feature0 = dt_math.gain(data_features_split, feature_objects[1], list_of_classes, dt_math.entropy)
-    info_gain_gni_feature0 = dt_math.gain(data_features_split, feature_objects[1], list_of_classes, dt_math.gni_index)
+    decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
 
-    print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
-    print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
+    # Doing testing data now
+    testing_data = load_file("testing.csv")
+    test_features_split = split_features(testing_data, partition_size, False)
 
-    decision_tree = ID3(data_features_split, list_of_classes, feature_objects)
+    testing_predictions = predict(decision_tree, test_features_split[:,:], 1)
 
-    traverse_tree(decision_tree)
+    output_data(testing_predictions, "testing-1.csv")
 
-    predictions = predict(decision_tree, data_features_split[:1500, :], 1)
 
-    print("predicting data from " + str(1) + " to " + str(1500))
-    for i in range(len(predictions)):
-        print(predictions[i])
-
-    for i in range(0, 20):
-        print("\nID " + str(i+1) + " ", end= "")
-        for j in range(0, 60):
-            print(data_features_split[i, j], end= "")
-        print(" Class: " + str(data_features_split[i, 60]), end="")
-
-    total_right = 0
-    for i in range(0, len(predictions)):
-        if predictions[i][0] == data_features_split[i, 60]:
-            total_right += 1
-    accuracy = total_right / 1500
-    print("\n\nAccuracy = " + str(accuracy))
-
-    """ printing decision tree for boolean data """
-    # for branch in decision_tree.get_branches():
-    #     print(branch.get_branch_name())
-    #     print("The child feature is " + str(branch.child_feature))
+    # VALIDATION IS HERE
+    # TODO: This only goes to 1598 because we are doing "validation data"
+    # decision_tree = ID3(data_features_split[:1598, :], list_of_classes, feature_objects)
     #
-    #     if type(branch.child_feature) is not str:
-    #         for sub_branch in branch.child_feature.get_branches():
-    #             print("Child branches: " + str(sub_branch.get_branch_name()))
-    #             print("Child feature is " + str(sub_branch.child_feature))
+    # predictions = predict(decision_tree, data_features_split[1598:, :], 1598)
+    #
+    # output_data(predictions, "training-1.csv")
+    #
+    # correct = 0
+    # wrong = 0
+    # for num in range(400):#data_features_split[1598:, :]:
+    #     actual_class = data_features_split[1598 + num, -1]
+    #     predicted_class = predictions[num][0]
+    #
+    #     if actual_class == predicted_class:
+    #          correct += 1
+    #     else:
+    #         wrong += 1
+    #
+    # print("Accuracy: %f" % (correct / (correct + wrong)))
+
+
+
+
+
+
+
+def output_data(predictions, file_name):
+    file = open(file_name, "w")
+    for tuple in predictions:
+        file.write(str(tuple[1]) + "," + str(tuple[0]) + "\n")
+
+    file.close()
 
 
 def predict(decision_tree, data, data_index):
@@ -188,7 +192,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     for branch in node.get_branches():
         # Gathering all examples that match this branch value, returns a numpy matrix
         subset_data_feature_match = np.array(dt_math.get_example_matching_value(data_features_split_copy, branch.get_branch_name(), node))
-        print("Shape of branch " + str(branch.get_branch_name()) + ":" + str(subset_data_feature_match.shape) + ", parent id: " + str(node.feature_index))
+        #print("Shape of branch " + str(branch.get_branch_name()) + ":" + str(subset_data_feature_match.shape) + ", parent id: " + str(node.feature_index))
 
         # If the examples list is empty(ie., there are no examples left that have this value after trimming so many subsets)
         if subset_data_feature_match.shape[0] == 0:
@@ -216,14 +220,14 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     for feature_index in range(length_of_data):
         if feature_objects[feature_index] != "None":
             info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
-            print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
+            #print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
 
             # Getting the highest info gained feature
             if info_gained_entropy > highest_ig_num:
                 highest_ig_num = info_gained_entropy
                 highest_ig_index = feature_index
 
-    print("Highest_ig_num: %f Highest_ig_index: %d" % (highest_ig_num, highest_ig_index))
+    #print("Highest_ig_num: %f Highest_ig_index: %d" % (highest_ig_num, highest_ig_index))
 
     #if highest info gain is 0, return arbitrary index
     if highest_ig_num == 0:
@@ -257,7 +261,7 @@ def get_classifications(class_list):
     return list_of_classes
 
 """ splits string of features every nth character denoted by partition_size """
-def split_features(data, partition_size = 1):
+def split_features(data, partition_size = 1, is_training = True):
     features = data[:, 1]
     matrix_of_features = []
 
@@ -266,9 +270,10 @@ def split_features(data, partition_size = 1):
         matrix_of_features.append(split_sequence)
 
     # Concatenation of features and the "output". Output also known as labels
-    data_features_split = np.c_[matrix_of_features, data[:, 2]]
-
-    return data_features_split
+    if is_training == True:
+        return np.c_[matrix_of_features, data[:, 2]]
+    else:
+        return matrix_of_features
 
 
 
@@ -316,23 +321,23 @@ def traverse_tree(decision_tree):
         v = q.get()
 
         if type(v) is dt.Feature:
-            print("\nFeature: " + str(v.feature_index))
+            #print("\nFeature: " + str(v.feature_index))
 
             for branch in v.get_branches():
-                print(branch.get_branch_name() + " ", end='')
+                #print(branch.get_branch_name() + " ", end='')
                 q.put(branch)
-            print("")
+            #print("")
         elif type(v) is dt.Branch:
-            print("\nValue:" + str(v.get_branch_name()))
-
-            if type(v.child_feature) is str or type(v.child_feature) is np.ndarray:
-                print("---> Leaf: " + str(v.child_feature))
-            elif type(v.child_feature) is dt.Feature:
-                print("---> Child Feature: " + str(v.child_feature.feature_index))
+            # print("\nValue:" + str(v.get_branch_name()))
+            #
+            # if type(v.child_feature) is str or type(v.child_feature) is np.ndarray:
+            #     print("---> Leaf: " + str(v.child_feature))
+            # elif type(v.child_feature) is dt.Feature:
+            #     print("---> Child Feature: " + str(v.child_feature.feature_index))
 
             q.put(v.child_feature)
-        elif type(v) is str:
-            print("Leaf: " + str(v))
+        #elif type(v) is str:
+            #print("Leaf: " + str(v))
 
 def chi_square_test(data, current_feature, list_of_classes):
     class_totals = dt_math.determine_class_totals(data, list_of_classes, False)
