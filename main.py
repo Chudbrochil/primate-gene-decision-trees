@@ -17,24 +17,21 @@ import copy
 
 def main():
 
+    # Loading training data and building an ID3 tree.
     data = load_file("training.csv")
     partition_size = 1
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
-
-
     decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
 
     # Doing testing data now
     testing_data = load_file("testing.csv", None)
     test_features_split = split_features(testing_data, partition_size, False)
 
-    print(test_features_split)
-
     testing_predictions = predict(decision_tree, test_features_split[:,:], 2001)
 
-    output_data(testing_predictions, "testing-1.csv")
+    output_data(testing_predictions, "testing-2.csv")
 
 
     # VALIDATION IS HERE, TODO: DON'T DELETE
@@ -189,8 +186,8 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
         return most_common_class
 
-
-    current_feature = feature_objects[highest_ig_feature_index]
+    # TODO: Remember, this might affect accuracy. This before was feature_objects[highest_ig_feature_index]
+    current_feature = feature_objects_copy[highest_ig_feature_index]
     #determine if this feature will be of statistical benefit using chi-square
     feature_is_beneficial = chi_square_test(data_features_split, current_feature, list_of_classes)
 
@@ -198,8 +195,6 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     if not feature_is_beneficial:
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
-
-    #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
 
     node = feature_objects_copy[highest_ig_feature_index]
     feature_objects_copy[highest_ig_feature_index] = "None"

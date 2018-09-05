@@ -1,0 +1,5 @@
+testing-1.csv - Testing accuracy was 91.8%
+Our first submission.
+
+testing-2.csv - Have not submitted yet.
+Changed a line in ID3 that does a deep copy of features.
