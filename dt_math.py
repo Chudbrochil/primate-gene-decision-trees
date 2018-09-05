@@ -48,6 +48,36 @@ def gni_index(examples, classes):
 
     return gni
 
+""" Gain calculates the information gain of each feature on current passed in examples
+   gain(data, A) -> will look through values Y & Z for feature A.
+   feature - an object... with this features column index in the
+   dataset and needs to have a list of it's values....
+"""
+def gain(examples, feature, classes, impurity_func):
+    #determine impurity of entire dataset
+    gain = impurity_func(examples, classes)
+
+    #print("entropy of entire set: " + str(gain))
+
+    #determine impurity for each value in feature, sum together and return info gain
+    for branch in feature.get_branches():
+
+        #return subset of examples that only have this value
+        subset_of_example = get_example_matching_value(examples, branch.get_branch_name(), feature)
+
+        # if(examples.shape[0] == 22):
+        #     print(subset_of_example.shape)
+        #print("shape of subset of a value for this feature" + str(subset_of_example.shape))
+
+        total_subset_of_value = len(subset_of_example)
+
+        #math of information gain
+        proportion_of_subset = total_subset_of_value / len(examples) * 1.0
+        subset_entropy = proportion_of_subset * impurity_func(subset_of_example, classes)
+        gain = gain - subset_entropy
+
+    return gain
+
 #TODO can easily replace dictionaries with list if preferred
 def determine_class_totals(examples, classes, get_most_common_class = False):
     labels = {}
@@ -82,36 +112,6 @@ def determine_class_totals(examples, classes, get_most_common_class = False):
         return most_common_class
     else:
         return label_totals
-
-""" Gain calculates the information gain of each feature on current passed in examples
-   gain(data, A) -> will look through values Y & Z for feature A.
-   feature - an object... with this features column index in the
-   dataset and needs to have a list of it's values....
-"""
-def gain(examples, feature, classes, impurity_func):
-    #determine impurity of entire dataset
-    gain = impurity_func(examples, classes)
-
-    #print("entropy of entire set: " + str(gain))
-
-    #determine impurity for each value in feature, sum together and return info gain
-    for branch in feature.get_branches():
-
-        #return subset of examples that only have this value
-        subset_of_example = get_example_matching_value(examples, branch.get_branch_name(), feature)
-
-        # if(examples.shape[0] == 22):
-        #     print(subset_of_example.shape)
-        #print("shape of subset of a value for this feature" + str(subset_of_example.shape))
-
-        total_subset_of_value = len(subset_of_example)
-
-        #math of information gain
-        proportion_of_subset = total_subset_of_value / len(examples) * 1.0
-        subset_entropy = proportion_of_subset * impurity_func(subset_of_example, classes)
-        gain = gain - subset_entropy
-
-    return gain
 
 def get_example_matching_value(examples, branch_name, feature):
     subset_of_value = []

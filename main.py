@@ -116,29 +116,20 @@ def recursive_prediction_traversal(single_example, node, data_index):
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects):
 
-    #no examples left
-    if data_features_split.shape[0] == 0:
-        return ""
-
     # If all of the remaining examples have the same classification, return that classification
     # This is the "base case"
-    initial_classification = None
+    initial_classification = "None"
     found_different = False
     for example in data_features_split:
 
         classification = example[-1:]
 
-        if initial_classification is None:
+        if initial_classification != "None":
             initial_classification = classification
-
-        #note: is not DOESNT EQUAL != ... bad bad bug
         elif classification != initial_classification:
             found_different = True
             break
 
-    # So instead of putting a feature as a child to a branch.
-    # We are putting a "leaf node", which is really just a string that
-    # represents a single classification. i.e. "IE" or "EI" or "N"
     if found_different is False:
         #print("Leaf value: " + str(classification))
         return classification
@@ -147,13 +138,12 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     #this is really ugly, but since we're not removing things for the list, not much else to do
     all_features_used = True
     for feature in feature_objects:
-        if feature is not None:
+        if feature != "None":
             all_features_used = False
             break
 
-    #TODO determine the most popular classification
     if all_features_used:
-        #print("All features have been used, returning most common class")
+        print("All features have been used, returning most common class")
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
 
@@ -171,26 +161,26 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         return most_common_class
 
     #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
+
     """
     node = feature_objects[highest_ig_feature_index]
 
     # For every possible branch(value). Should look like {A, C, G, T}
     for branch in node.get_branches():
         # Gathering all examples that match this branch value, returns a numpy matrix
-        subset_data_feature_match = dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node) # TODO: Change root to make this recursive
+        subset_data_feature_match = np.array(dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node))
+        print("Shape of branch " + str(branch.get_branch_name()) + ":" + str(subset_data_feature_match.shape) + ", parent id: " + str(node.feature_index))
 
         # If the examples list is empty(ie., there are no examples left that have this value after trimming so many subsets)
         if subset_data_feature_match.shape[0] == 0:
-            # We found an "A" in column 29, all the other examples aren't "A". We would need to loop over
-            # all examples and return the most common classification. (IE, EI, N)
             most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
             branch.add_child_feature(most_common_class)
         else:
             # Recurse
-            feature_objects[highest_ig_feature_index] = None
-            child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects)
-            #child feature is going to be a classification, not a feature!
-
+            #this is being applied to the very first instance of feature objects in the first call when feature 29 is parent
+            feature_objects[highest_ig_feature_index] = "None"
+            feature_objects_copy = feature_objects
+            child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects_copy)
             branch.add_child_feature(child_feature)
 
     return node
@@ -207,7 +197,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     highest_ig_index = -1
 
     for feature_index in range(length_of_data):
-        if feature_objects[feature_index] is not None:
+        if feature_objects[feature_index] != "None":
             info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
             print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
 
@@ -221,7 +211,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     #if highest info gain is 0, return arbitrary index
     if highest_ig_num == 0:
         for feature_index in range(length_of_data):
-            if feature_objects[feature_index] is not None:
+            if feature_objects[feature_index] != "None":
                 print("Highest_ig_num was 0, returning random feature index: " + str(feature_index))
                 highest_ig_index = feature_index
                 break
