@@ -280,9 +280,6 @@ def split_features(data, partition_size = 1, is_training = True):
         split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
         matrix_of_features.append(split_sequence)
 
-    #print(np.c_[matrix_of_features, data[:, 2]])
-    #print(np.c_[matrix_of_features])
-
     # Concatenation of features and the "output". Output also known as labels
     if is_training == True:
         return np.c_[matrix_of_features, data[:, 2]]
@@ -399,14 +396,13 @@ def chi_square_test(data, current_feature, list_of_classes):
                 continue
             chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
 
-    print("Chi-square value: " + str(chi_square_value))
-
     """ determine if chi-square value if in or out of distrubution """
     degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
 
     #critical_value = compute_critical_value(degree_of_freedom, .95)
     critical_value = dt_math.chi_square[degree_of_freedom][0.05]
 
+    # Evaluating whether or not the chi_square_value is within the confidence level or not
     if chi_square_value < critical_value:
         return False
     else:
