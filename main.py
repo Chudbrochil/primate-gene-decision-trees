@@ -32,8 +32,24 @@ def main():
 
     traverse_tree(decision_tree)
 
-    predictions = predict(decision_tree, data_features_split[100:120, :])
-    print(predictions)
+    predictions = predict(decision_tree, data_features_split[:20, :], 1)
+
+    print("predicting data from " + str(1) + " to " + str(20))
+    for i in range(len(predictions)):
+        print(predictions[i])
+
+    for i in range(0, 20):
+        print("\nID " + str(i+1) + " ", end= "")
+        for j in range(0, 60):
+            print(data_features_split[i, j], end= "")
+        print(" Class: " + str(data_features_split[i, 60]), end="")
+
+    total_right = 0
+    for i in range(0, len(predictions)):
+        if predictions[i][0] == data_features_split[i, 60]:
+            total_right += 1
+    accuracy = total_right / 20
+    print("\n\nAccuracy = " + str(accuracy))
 
     """ printing decision tree for boolean data """
     # for branch in decision_tree.get_branches():
@@ -46,31 +62,56 @@ def main():
     #             print("Child feature is " + str(sub_branch.child_feature))
 
 
-def predict(decision_tree, data):
+def predict(decision_tree, data, data_index):
+    print(len(data))
     predictions = []
     node = decision_tree
+
     for example in data:
-
-        current_feature_data = example[node.feature_index]
-
+        #get this current features value at the index of the current node of the tree
+        current_feature_data_value = example[node.feature_index]
+        #go through the possible values for this feature
         for branch in node.get_branches():
-
-            if current_feature_data == branch.branch_value:
-
+            #if the current value of the feature in this example is equal to a branches value
+            if current_feature_data_value == branch.branch_value:
+                #if the child feature of this branch is a leaf
                 if type(branch.child_feature) is not dt.Feature:
-
                     if type(branch.child_feature) is not str:
                         temp_prediction = branch.child_feature[0]
                     else:
                         temp_prediction = branch.child_feature
 
-                    predictions.append(temp_prediction)
+                    tuple_prediction = (temp_prediction, data_index)
+                    predictions.append(tuple_prediction)
+                    data_index += 1
                     break
-                    
+                #if the child feature is not a leaf
                 else:
                     node = branch.child_feature
+                    predictions.append(recursive_prediction_traversal(example, node, data_index))
+                    data_index += 1
+                    break
 
     return predictions
+
+#i couldn't do this above because of the examples.... frustratingly ugly... FIXXXXX
+def recursive_prediction_traversal(single_example, node, data_index):
+    current_feature_data_value = single_example[node.feature_index]
+
+    for branch in node.get_branches():
+        if current_feature_data_value == branch.branch_value:
+            if type(branch.child_feature) is not dt.Feature:
+                if type(branch.child_feature) is not str:
+                    temp_prediction = branch.child_feature[0]
+                else:
+                    temp_prediction = branch.child_feature
+
+                tuple_prediction = (temp_prediction, data_index)
+                return tuple_prediction
+            #move on to next feature if values matched by child is a feature
+            else:
+                node = branch.child_feature
+                return recursive_prediction_traversal(single_example, node, data_index)
 
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects, current_feature_hierarchy):
@@ -157,69 +198,6 @@ def ID3(data_features_split, list_of_classes, feature_objects, current_feature_h
             branch.add_child_feature(child_feature)
 
     return node
-
-def chi_square_test(data, current_feature, list_of_classes):
-    class_totals = dt_math.determine_class_totals(data, list_of_classes, False)
-
-    """ build table of real and expected values for current feature """
-    total_data_size = len(data) #TODO: might have to take only 1st dimension of data
-
-    #build a matrix the dimensions of, (total_values_for_feature, total_classes)
-    variable_matrix_real = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
-    variable_matrix_expected = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
-
-    #determine "real values" for each value and class of this feature
-    counter = 0
-    for branch in current_feature.get_branches():
-        #returns subset of data matching the current value of this feature
-        subset_data_feature_match = dt_math.get_example_matching_value(data, branch.get_branch_name(), current_feature)
-
-        #returns a dictionary of totals of each class for this value of this feature
-        class_totals_for_subvalue = dt_math.determine_class_totals(subset_data_feature_match, list_of_classes, False)
-
-        #fill variable_matrix_real with class totals for this current branch
-        for j in range(0, len(class_totals_for_subvalue)):
-            variable_matrix_real[counter][j] = class_totals_for_subvalue["class" + str(j)]
-        counter += 1
-
-    #calculate expected values
-    counter = 0
-    for branch in current_feature.get_branches():
-        subset_data_feature_match = dt_math.get_example_matching_value(data, branch.get_branch_name(), current_feature)
-
-        total_subset_size = len(subset_data_feature_match)
-
-        class_totals_for_subvalue = dt_math.determine_class_totals(subset_data_feature_match, list_of_classes, False)
-
-        for j in range(len(class_totals_for_subvalue)):
-            variable_matrix_expected[counter][j] = total_subset_size * (class_totals["class" + str(j)] / total_data_size)
-        counter += 1
-
-    chi_square_value = 0
-    """ run chi-square function over built table """
-    #for every class compute the different values chi square
-    for i in range(len(current_feature.get_branches())):
-        for j in range(len(class_totals)):
-            if variable_matrix_expected[i][j] == 0:
-                continue
-            chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
-
-    print("Chi-square value: " + str(chi_square_value))
-
-    """ determine if chi-square value if in or out of distrubution """
-    degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
-
-    critical_value = compute_critical_value(degree_of_freedom, .95)
-
-    if chi_square_value < critical_value:
-        return False
-    else:
-        return True
-
-
-#TODO: determine how to computer critical value, mainly how loading in Chi-Square table...
-def compute_critical_value(degree_of_freedom, confidence_level):
-    return 1
 
 # Obtaining the highest information gain feature index from the remaining list of features
 def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
@@ -352,5 +330,68 @@ def traverse_tree(decision_tree):
             q.put(v.child_feature)
         elif type(v) is str:
             print("Leaf: " + str(v))
+
+def chi_square_test(data, current_feature, list_of_classes):
+    class_totals = dt_math.determine_class_totals(data, list_of_classes, False)
+
+    """ build table of real and expected values for current feature """
+    total_data_size = len(data) #TODO: might have to take only 1st dimension of data
+
+    #build a matrix the dimensions of, (total_values_for_feature, total_classes)
+    variable_matrix_real = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
+    variable_matrix_expected = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
+
+    #determine "real values" for each value and class of this feature
+    counter = 0
+    for branch in current_feature.get_branches():
+        #returns subset of data matching the current value of this feature
+        subset_data_feature_match = dt_math.get_example_matching_value(data, branch.get_branch_name(), current_feature)
+
+        #returns a dictionary of totals of each class for this value of this feature
+        class_totals_for_subvalue = dt_math.determine_class_totals(subset_data_feature_match, list_of_classes, False)
+
+        #fill variable_matrix_real with class totals for this current branch
+        for j in range(0, len(class_totals_for_subvalue)):
+            variable_matrix_real[counter][j] = class_totals_for_subvalue["class" + str(j)]
+        counter += 1
+
+    #calculate expected values
+    counter = 0
+    for branch in current_feature.get_branches():
+        subset_data_feature_match = dt_math.get_example_matching_value(data, branch.get_branch_name(), current_feature)
+
+        total_subset_size = len(subset_data_feature_match)
+
+        class_totals_for_subvalue = dt_math.determine_class_totals(subset_data_feature_match, list_of_classes, False)
+
+        for j in range(len(class_totals_for_subvalue)):
+            variable_matrix_expected[counter][j] = total_subset_size * (class_totals["class" + str(j)] / total_data_size)
+        counter += 1
+
+    chi_square_value = 0
+    """ run chi-square function over built table """
+    #for every class compute the different values chi square
+    for i in range(len(current_feature.get_branches())):
+        for j in range(len(class_totals)):
+            if variable_matrix_expected[i][j] == 0:
+                continue
+            chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
+
+    print("Chi-square value: " + str(chi_square_value))
+
+    """ determine if chi-square value if in or out of distrubution """
+    degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
+
+    critical_value = compute_critical_value(degree_of_freedom, .95)
+
+    if chi_square_value < critical_value:
+        return False
+    else:
+        return True
+
+
+#TODO: determine how to computer critical value, mainly how loading in Chi-Square table...
+def compute_critical_value(degree_of_freedom, confidence_level):
+    return 1
 
 main()
