@@ -28,7 +28,7 @@ def main():
     print("Information gain on column 1(feature 1), with entropy: " + str(info_gain_feature0))
     print("Information gain on column 1(feature 1), with gni_index: " + str(info_gain_gni_feature0))
 
-    decision_tree = ID3(data_features_split, list_of_classes, feature_objects, [])
+    decision_tree = ID3(data_features_split, list_of_classes, feature_objects)
 
     traverse_tree(decision_tree)
 
@@ -157,12 +157,10 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
         return most_common_class
 
-
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
 
-
-    """ chi-square code
+    """
     current_feature = feature_objects[highest_ig_feature_index]
     #determine if this feature will be of statistical benefit using chi-square
     feature_is_beneficial = chi_square_test(data_features_split, current_feature, list_of_classes)
@@ -191,6 +189,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
             # Recurse
             feature_objects[highest_ig_feature_index] = None
             child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects)
+            #child feature is going to be a classification, not a feature!
 
             branch.add_child_feature(child_feature)
 

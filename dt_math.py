@@ -20,6 +20,9 @@ def entropy(examples, classes):
     #determine each unique class and count how many times each is in set of examples
     label_totals = determine_class_totals(examples, classes)
 
+    #for i in range(len(label_totals)):
+    #    print(label_totals["class" + str(i)])
+
     #calculate entropy now that proportions are known (p_i)
     for i in range(numOfClasses):
         p_i = label_totals["class" + str(i)] / total_examples
