@@ -56,6 +56,10 @@ def gni_index(examples, classes):
 def gain(examples, feature, classes, impurity_func):
     #determine impurity of entire dataset
     gain = impurity_func(examples, classes)
+    # if gain == 0:
+    #     print(feature.feature_index)
+    #     print(examples)
+
 
     #print("entropy of entire set: " + str(gain))
 
@@ -75,6 +79,8 @@ def gain(examples, feature, classes, impurity_func):
         proportion_of_subset = total_subset_of_value / len(examples) * 1.0
         subset_entropy = proportion_of_subset * impurity_func(subset_of_example, classes)
         gain = gain - subset_entropy
+
+
 
     return gain
 

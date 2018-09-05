@@ -12,6 +12,7 @@ import numpy as np
 import decision_tree as dt
 import dt_math as dt_math
 import queue
+import copy
 
 def main():
     data = load_file("training.csv")
@@ -32,9 +33,9 @@ def main():
 
     traverse_tree(decision_tree)
 
-    predictions = predict(decision_tree, data_features_split[:20, :], 1)
+    predictions = predict(decision_tree, data_features_split[:1500, :], 1)
 
-    print("predicting data from " + str(1) + " to " + str(20))
+    print("predicting data from " + str(1) + " to " + str(1500))
     for i in range(len(predictions)):
         print(predictions[i])
 
@@ -48,7 +49,7 @@ def main():
     for i in range(0, len(predictions)):
         if predictions[i][0] == data_features_split[i, 60]:
             total_right += 1
-    accuracy = total_right / 20
+    accuracy = total_right / 1500
     print("\n\nAccuracy = " + str(accuracy))
 
     """ printing decision tree for boolean data """
@@ -83,12 +84,14 @@ def predict(decision_tree, data, data_index):
 
                     tuple_prediction = (temp_prediction, data_index)
                     predictions.append(tuple_prediction)
+                    node = decision_tree
                     data_index += 1
                     break
                 #if the child feature is not a leaf
                 else:
                     node = branch.child_feature
                     predictions.append(recursive_prediction_traversal(example, node, data_index))
+                    node = decision_tree
                     data_index += 1
                     break
 
@@ -116,15 +119,18 @@ def recursive_prediction_traversal(single_example, node, data_index):
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects):
 
+    data_features_split_copy = copy.deepcopy(data_features_split)
+    feature_objects_copy = copy.deepcopy(feature_objects)
+
     # If all of the remaining examples have the same classification, return that classification
     # This is the "base case"
     initial_classification = "None"
     found_different = False
-    for example in data_features_split:
+    for example in data_features_split_copy:
 
         classification = example[-1:]
 
-        if initial_classification != "None":
+        if initial_classification == "None":
             initial_classification = classification
         elif classification != initial_classification:
             found_different = True
@@ -137,18 +143,27 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     #if there are no more features to look at, return with a leaf of the most common class
     #this is really ugly, but since we're not removing things for the list, not much else to do
     all_features_used = True
-    for feature in feature_objects:
+    for feature in feature_objects_copy:
         if feature != "None":
             all_features_used = False
             break
 
     if all_features_used:
         print("All features have been used, returning most common class")
-        most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
+        most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
         return most_common_class
 
     # "The attribute from Attributes that best* classifies Examples"
-    highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split, feature_objects, list_of_classes)
+    highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split_copy, feature_objects_copy, list_of_classes)
+
+    if highest_ig_num == 0:
+        for example in data_features_split_copy:
+            print(example)
+
+    if highest_ig_num == 0:
+        print("No more important features")
+        most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
+        return most_common_class
 
     """
     current_feature = feature_objects[highest_ig_feature_index]
@@ -163,23 +178,22 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     #print("current_feature_hierarchy = " + str(current_feature_hierarchy))
 
     """
-    node = feature_objects[highest_ig_feature_index]
+    node = feature_objects_copy[highest_ig_feature_index]
+    feature_objects_copy[highest_ig_feature_index] = "None"
 
     # For every possible branch(value). Should look like {A, C, G, T}
     for branch in node.get_branches():
         # Gathering all examples that match this branch value, returns a numpy matrix
-        subset_data_feature_match = np.array(dt_math.get_example_matching_value(data_features_split, branch.get_branch_name(), node))
+        subset_data_feature_match = np.array(dt_math.get_example_matching_value(data_features_split_copy, branch.get_branch_name(), node))
         print("Shape of branch " + str(branch.get_branch_name()) + ":" + str(subset_data_feature_match.shape) + ", parent id: " + str(node.feature_index))
 
         # If the examples list is empty(ie., there are no examples left that have this value after trimming so many subsets)
         if subset_data_feature_match.shape[0] == 0:
-            most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
+            most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
             branch.add_child_feature(most_common_class)
         else:
             # Recurse
             #this is being applied to the very first instance of feature objects in the first call when feature 29 is parent
-            feature_objects[highest_ig_feature_index] = "None"
-            feature_objects_copy = feature_objects
             child_feature = ID3(subset_data_feature_match, list_of_classes, feature_objects_copy)
             branch.add_child_feature(child_feature)
 
