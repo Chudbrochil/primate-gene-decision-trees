@@ -35,21 +35,36 @@ confidence_level = 0.90
 purity_method = dt_math.gni_index
 
 def main():
-
-    # Loading training data and building an ID3 tree.
-    print("Confidence level: %f" % confidence_level)
-    print("purity_method: %s" % split_method.__name__)
+    # Initialized variables. Could be brought in via CLI options
+    partition_size = 1
     training_file_name = "training.csv"
+    testing_file_name = "testing.csv"
+
+    decision_tree = train(training_file_name, partition_size)
+    test(decision_tree, testing_file_name, partition_size)
+
+
+# train()
+# Collection method for building an ID3 tree with training data.
+def train(training_file_name, partition_size):
+
+    # Printing some details about what we are training on
+    print("Confidence level: %f" % confidence_level)
+    print("purity_method: %s" % purity_method.__name__)
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
-    partition_size = 1
+
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
     decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
 
-    # Doing testing data now
-    testing_file_name = "testing.csv"
+    return decision_tree
+
+
+# test()
+# Collection method for classifying testing data against our decision tree.
+def test(decision_tree, testing_file_name, partition_size):
     print("Loading file: %s" % testing_file_name)
     testing_data = load_file(testing_file_name, None)
     test_features_split = split_features(testing_data, partition_size, False)
@@ -307,7 +322,6 @@ def create_features(data_features_split):
     # TODO: Is complexity of this loop fine? We could look to opimize...
     for i in range(0, data_features_split.shape[1]-1):
         feature = dt.Feature(i, [])
-        #go through each example to determine each value of feature
 
         # For every entry of data, add a branch to a given feature if it isn't
         # already in the list of branches
