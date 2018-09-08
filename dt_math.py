@@ -1,3 +1,6 @@
+# Tristin Glunt / Anthony Galczak - tglunt@unm.edu - agalczak@unm.edu
+# CS529 - Project 1 - Decision Trees
+
 import math
 import numpy as np
 
@@ -7,6 +10,7 @@ chi_square = [0, {0.95 : 3.84, 0.99 : 6.63}, {0.95 : 5.99, 0.99 : 9.21},
 {0.95 : 7.81, 0.99 : 11.34}, {0.95 : 9.49, 0.99 : 13.28}, {0.95 : 11.07, 0.99 : 15.09},
 {0.95 : 12.59, 0.99 : 16.81}, {0.95 : 14.07, 0.99 : 18.48}, {0.95 : 15.51, 0.99 : 20.09},
 {0.95 : 16.92, 0.99 : 21.67}, {0.95 : 18.31, 0.99 : 23.21}]
+
 
 """ Caclulates entropy on current set of examples.
     Used for the entire dataset and each value of a feature.
@@ -35,6 +39,7 @@ def entropy(examples, classes):
 
     return entropy
 
+
 def gni_index(examples, classes):
     gni = 1
 
@@ -44,6 +49,9 @@ def gni_index(examples, classes):
     total_examples = len(examples)
     numOfClasses = len(classes)
 
+    if total_examples == 0:
+        return 0
+
     #calculate entropy now that proportions are known (p_i)
     for i in range(numOfClasses):
         p_i = label_totals["class" + str(i)] / total_examples
@@ -51,6 +59,7 @@ def gni_index(examples, classes):
             gni = gni - (p_i ** 2)
 
     return gni
+
 
 """ Gain calculates the information gain of each feature on current passed in examples
    gain(data, A) -> will look through values Y & Z for feature A.
@@ -74,9 +83,8 @@ def gain(examples, feature, classes, impurity_func):
         subset_entropy = proportion_of_subset * impurity_func(subset_of_example, classes)
         gain = gain - subset_entropy
 
-
-
     return gain
+
 
 #TODO can easily replace dictionaries with list if preferred
 def determine_class_totals(examples, classes, get_most_common_class = False):
@@ -113,6 +121,7 @@ def determine_class_totals(examples, classes, get_most_common_class = False):
     else:
         return label_totals
 
+
 def get_example_matching_value(examples, branch_name, feature):
     subset_of_value = []
 
@@ -125,3 +134,62 @@ def get_example_matching_value(examples, branch_name, feature):
     #convert subset to np matrix so we can use .shape
     subset_of_value = np.array(subset_of_value)
     return subset_of_value
+
+
+def chi_square_test(data, current_feature, list_of_classes, confidence_level):
+    class_totals = determine_class_totals(data, list_of_classes, False)
+
+    """ build table of real and expected values for current feature """
+    total_data_size = len(data) #TODO: might have to take only 1st dimension of data
+
+    #build a matrix the dimensions of, (total_values_for_feature, total_classes)
+    variable_matrix_real = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
+    variable_matrix_expected = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
+
+    #determine "real values" for each value and class of this feature
+    counter = 0
+    for branch in current_feature.get_branches():
+        #returns subset of data matching the current value of this feature
+        subset_data_feature_match = get_example_matching_value(data, branch.get_branch_name(), current_feature)
+
+        #returns a dictionary of totals of each class for this value of this feature
+        class_totals_for_subvalue = determine_class_totals(subset_data_feature_match, list_of_classes, False)
+
+        #fill variable_matrix_real with class totals for this current branch
+        for j in range(0, len(class_totals_for_subvalue)):
+            variable_matrix_real[counter][j] = class_totals_for_subvalue["class" + str(j)]
+        counter += 1
+
+    #calculate expected values
+    counter = 0
+    for branch in current_feature.get_branches():
+        subset_data_feature_match = get_example_matching_value(data, branch.get_branch_name(), current_feature)
+
+        total_subset_size = len(subset_data_feature_match)
+
+        class_totals_for_subvalue = determine_class_totals(subset_data_feature_match, list_of_classes, False)
+
+        for j in range(len(class_totals_for_subvalue)):
+            variable_matrix_expected[counter][j] = total_subset_size * (class_totals["class" + str(j)] / total_data_size)
+        counter += 1
+
+    chi_square_value = 0
+    """ run chi-square function over built table """
+    #for every class compute the different values chi square
+    for i in range(len(current_feature.get_branches())):
+        for j in range(len(class_totals)):
+            if variable_matrix_expected[i][j] == 0:
+                continue
+            chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
+
+    """ determine if chi-square value if in or out of distrubution """
+    degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
+
+    #critical_value = compute_critical_value(degree_of_freedom, .95)
+    critical_value = chi_square[degree_of_freedom][confidence_level]
+
+    # Evaluating whether or not the chi_square_value is within the confidence level or not
+    if chi_square_value < critical_value:
+        return False
+    else:
+        return True

@@ -1,5 +1,11 @@
-kaggle1 - Testing accuracy was 91.8%
+kaggle1 - 91.8%
 Our first submission.
 
 kaggle2 - Accuracy 91.386%
 Changed a line in ID3 that does a deep copy of features.
+
+kaggle5 - 91.8%
+first gni_index submission
+
+kaggle6 - 90.7%
+gni_index, 0.99 confidence
