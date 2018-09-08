@@ -25,7 +25,6 @@ import copy
 # Possible things to do:
 # Capture base cases in ID3 into a method.
 # Try to use partition size of 2, i.e. different sized features
-# Clean up validation data code and capture it into a method.
 # Implement random forests! Decent amount of work.
 # Add a CLI front end to input: confidence_level, impurity_func, training file, testing file
 
@@ -75,82 +74,78 @@ def test(decision_tree, testing_file_name, partition_size):
     output_predictions(testing_predictions, output_file_name)
 
 
-# output_predictions()
-# Takes our predictions and outputs them to a file for eventual submission.
-def output_predictions(predictions, file_name):
-    file = open(file_name, "w")
-    file.write("ID,Class\n")
-    for tuple in predictions:
-        #print(tuple)
-        file.write(str(tuple[1]) + "," + str(tuple[0]) + "\n")
+# load_file()
+# Loads a particular csv file and returns it as a pandas data frame.
+def load_file(file_name, header_size = 1):
 
-    file.close()
+    file = pd.read_csv(file_name, header = header_size)
+    data = file.values
+    return data
 
 
-# predict()
-# Traverses the decision tree that we made from training in order to classify
-# new data. Returns a full list of predictions (classifications) for a set of data.
-def predict(decision_tree, data, data_index):
-    predictions = []
-    node = decision_tree
+# split_features()
+# Splits the string of features every nth character denoted by partition_size.
+# Either returns a list of features or a list of features plus classifications.
+def split_features(data, partition_size = 1, is_training = True):
+    features = data[:, 1]
+    matrix_of_features = []
 
-    for example in data:
-        #get this current features value at the index of the current node of the tree
-        current_feature_data_value = example[node.feature_index]
-        #go through the possible values for this feature
-        for branch in node.get_branches():
-            #if the current value of the feature in this example is equal to a branches value
-            if current_feature_data_value == branch.branch_value:
-                #if the child feature of this branch is a leaf
-                if type(branch.child_feature) is not dt.Feature:
-                    if type(branch.child_feature) is not str:
-                        temp_prediction = branch.child_feature[0]
-                    else:
-                        temp_prediction = branch.child_feature
+    for sequence in features:
+        split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
+        matrix_of_features.append(split_sequence)
 
-                    tuple_prediction = (temp_prediction, data_index)
-                    predictions.append(tuple_prediction)
-                    node = decision_tree
-                    data_index += 1
-                    break
-                #if the child feature is not a leaf
-                else:
-                    node = branch.child_feature
-                    recursive_prediction = recursive_prediction_traversal(example, node, data_index)
+    # Concatenation of features and the classifications
+    if is_training == True:
+        return np.c_[matrix_of_features, data[:, 2]]
+    # If we aren't training, then we won't have classifications to return
+    else:
+        return np.c_[matrix_of_features]
 
-                    # TODO: Bug is exposed here when we have no confidence level. Must fix.
-                    if recursive_prediction == None:
-                        print(data_index)
-                        traverse_tree(node)
-                        #print(decision_tree)
 
-                    predictions.append(recursive_prediction)
-                    node = decision_tree
-                    data_index += 1
+# create_features()
+# Goes through all of our training data and creates feature and branch objects
+# corresponding to our features and their child values (A,C,G,T, etc.).
+def create_features(data_features_split):
+    list_of_features = []
+
+    #go through each feature in data
+    # TODO: Is complexity of this loop fine? We could look to opimize...
+    for i in range(0, data_features_split.shape[1]-1):
+        feature = dt.Feature(i, [])
+
+        # For every entry of data, add a branch to a given feature if it isn't
+        # already in the list of branches
+        for example in data_features_split:
+            example_value = example[i]
+            branch_list = feature.get_branches()
+            found_example_value = False
+
+            for branch in branch_list:
+                if branch.get_branch_name() is example_value:
+                    found_example_value = True
                     break
 
-    return predictions
+            if found_example_value == False:
+                feature.add_branch(example_value)
+
+        #after going through all of the examples, add feature object to list
+        list_of_features.append(feature)
+
+    return list_of_features
 
 
-# TODO:(Tristin) Comment this/clean it up
-#i couldn't do this above because of the examples.... frustratingly ugly... FIXXXXX
-def recursive_prediction_traversal(single_example, node, data_index):
-    current_feature_data_value = single_example[node.feature_index]
+# get_classifications()
+# Obtaining the classifications from our data. For the DNA data, should be ["IE", "EI", "N"]
+def get_classifications(class_list):
+    classes = set()
+    for list in class_list:
+        classes.add(list[0])
 
-    for branch in node.get_branches():
-        if current_feature_data_value == branch.branch_value:
-            if type(branch.child_feature) is not dt.Feature:
-                if type(branch.child_feature) is not str:
-                    temp_prediction = branch.child_feature[0]
-                else:
-                    temp_prediction = branch.child_feature
+    list_of_classes = []
+    for element in classes:
+        list_of_classes.append(element)
 
-                tuple_prediction = (temp_prediction, data_index)
-                return tuple_prediction
-            #move on to next feature if values matched by child is a feature
-            else:
-                node = branch.child_feature
-                return recursive_prediction_traversal(single_example, node, data_index)
+    return list_of_classes
 
 
 # TODO:(Anthony) Read this in-depth and make some comments.
@@ -237,6 +232,27 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     return node
 
 
+# TODO:(Tristin) Comment this/clean it up
+#i couldn't do this above because of the examples.... frustratingly ugly... FIXXXXX
+def recursive_prediction_traversal(single_example, node, data_index):
+    current_feature_data_value = single_example[node.feature_index]
+
+    for branch in node.get_branches():
+        if current_feature_data_value == branch.branch_value:
+            if type(branch.child_feature) is not dt.Feature:
+                if type(branch.child_feature) is not str:
+                    temp_prediction = branch.child_feature[0]
+                else:
+                    temp_prediction = branch.child_feature
+
+                tuple_prediction = (temp_prediction, data_index)
+                return tuple_prediction
+            #move on to next feature if values matched by child is a feature
+            else:
+                node = branch.child_feature
+                return recursive_prediction_traversal(single_example, node, data_index)
+
+
 # get_highest_ig_feat()
 # Obtaining the highest information gain feature index from the remaining list of features
 def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
@@ -270,79 +286,68 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     return highest_ig_index, highest_ig_num
 
 
-# load_file()
-# Loads a particular csv file and returns it as a pandas data frame.
-def load_file(file_name, header_size = 1):
+# predict()
+# Traverses the decision tree that we made from training in order to classify
+# new data. Returns a full list of predictions (classifications) for a set of data.
+def predict(decision_tree, data, data_index):
+    predictions = []
+    node = decision_tree
 
-    file = pd.read_csv(file_name, header = header_size)
-    data = file.values
-    return data
+    for example in data:
+        #get this current features value at the index of the current node of the tree
+        current_feature_data_value = example[node.feature_index]
+        #go through the possible values for this feature
+        for branch in node.get_branches():
+            #if the current value of the feature in this example is equal to a branches value
+            if current_feature_data_value == branch.branch_value:
+                #if the child feature of this branch is a leaf
+                if type(branch.child_feature) is not dt.Feature:
+                    if type(branch.child_feature) is not str:
+                        temp_prediction = branch.child_feature[0]
+                    else:
+                        temp_prediction = branch.child_feature
 
+                    tuple_prediction = (temp_prediction, data_index)
+                    predictions.append(tuple_prediction)
+                    node = decision_tree
+                    data_index += 1
+                    break
+                #if the child feature is not a leaf
+                else:
+                    node = branch.child_feature
+                    recursive_prediction = recursive_prediction_traversal(example, node, data_index)
 
-# get_classifications()
-# Obtaining the classifications from our data. For the DNA data, should be ["IE", "EI", "N"]
-def get_classifications(class_list):
-    classes = set()
-    for list in class_list:
-        classes.add(list[0])
+                    # TODO: Bug is exposed here when we have no confidence level. Must fix.
+                    if recursive_prediction == None:
+                        print(data_index)
+                        traverse_tree(node)
+                        #print(decision_tree)
 
-    list_of_classes = []
-    for element in classes:
-        list_of_classes.append(element)
-
-    return list_of_classes
-
-
-# split_features()
-# Splits the string of features every nth character denoted by partition_size.
-# Either returns a list of features or a list of features plus classifications.
-def split_features(data, partition_size = 1, is_training = True):
-    features = data[:, 1]
-    matrix_of_features = []
-
-    for sequence in features:
-        split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
-        matrix_of_features.append(split_sequence)
-
-    # Concatenation of features and the classifications
-    if is_training == True:
-        return np.c_[matrix_of_features, data[:, 2]]
-    # If we aren't training, then we won't have classifications to return
-    else:
-        return np.c_[matrix_of_features]
-
-
-# create_features()
-# Goes through all of our training data and creates feature and branch objects
-# corresponding to our features and their child values (A,C,G,T, etc.).
-def create_features(data_features_split):
-    list_of_features = []
-
-    #go through each feature in data
-    # TODO: Is complexity of this loop fine? We could look to opimize...
-    for i in range(0, data_features_split.shape[1]-1):
-        feature = dt.Feature(i, [])
-
-        # For every entry of data, add a branch to a given feature if it isn't
-        # already in the list of branches
-        for example in data_features_split:
-            example_value = example[i]
-            branch_list = feature.get_branches()
-            found_example_value = False
-
-            for branch in branch_list:
-                if branch.get_branch_name() is example_value:
-                    found_example_value = True
+                    predictions.append(recursive_prediction)
+                    node = decision_tree
+                    data_index += 1
                     break
 
-            if found_example_value == False:
-                feature.add_branch(example_value)
+    return predictions
 
-        #after going through all of the examples, add feature object to list
-        list_of_features.append(feature)
 
-    return list_of_features
+# output_predictions()
+# Takes our predictions and outputs them to a file for eventual submission.
+def output_predictions(predictions, file_name):
+    file = open(file_name, "w")
+    file.write("ID,Class\n")
+    for tuple in predictions:
+        #print(tuple)
+        file.write(str(tuple[1]) + "," + str(tuple[0]) + "\n")
 
+    file.close()
+
+
+if __name__ == "__main__":
+    main()
+
+
+# Helper/Debug Methods
 
 # traverse_tree()
 # BFS-like algorithm to go through decision tree. This is used purely for
@@ -376,31 +381,23 @@ def traverse_tree(decision_tree):
             #print("Leaf: " + str(v))
 
 
-if __name__ == "__main__":
-    main()
+# run_validation_dataset()
+# This method is useful for testing against a known validation dataset instead of
+# depending upon verifying our testing dataset against Kaggle.
+def run_validation_dataset(data_features_split, list_of_classes, feature_objects, start_index):
+    decision_tree = ID3(data_features_split[:1598, :], list_of_classes, feature_objects)
 
+    predictions = predict(decision_tree, data_features_split[1598:, :], 1598)
 
+    correct = 0
+    wrong = 0
+    for num in range(400):#data_features_split[1598:, :]:
+        actual_class = data_features_split[1598 + num, -1]
+        predicted_class = predictions[num][0]
 
+        if actual_class == predicted_class:
+             correct += 1
+        else:
+            wrong += 1
 
-
-# GRAVEYARD
-
-# TODO: This only goes to 1598 because we are doing "validation data"
-# decision_tree = ID3(data_features_split[:1598, :], list_of_classes, feature_objects)
-#
-# predictions = predict(decision_tree, data_features_split[1598:, :], 1598)
-#
-# output_data(predictions, "training-1.csv")
-#
-# correct = 0
-# wrong = 0
-# for num in range(400):#data_features_split[1598:, :]:
-#     actual_class = data_features_split[1598 + num, -1]
-#     predicted_class = predictions[num][0]
-#
-#     if actual_class == predicted_class:
-#          correct += 1
-#     else:
-#         wrong += 1
-#
-# print("Accuracy: %f" % (correct / (correct + wrong)))
+    print("Accuracy: %f" % (correct / (correct + wrong)))
