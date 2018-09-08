@@ -25,7 +25,6 @@ def entropy(examples, classes):
     numOfClasses = len(classes)
 
     if total_examples == 0:
-        #print("total examples = 0")
         return 0
 
     #determine each unique class and count how many times each is in set of examples
