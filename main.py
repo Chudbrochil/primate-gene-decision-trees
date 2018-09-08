@@ -39,13 +39,13 @@ import argparse
 # These can be set globally to change what we are using for confidence level
 # and whether we are using entropy or gni_index
 confidence_level = 0.90
-purity_method = dt_math.gni_index
+is_entropy = True
 
 def main():
     global confidence_level
     global purity_method
 
-
+    # Parsing command line arguments such as confidence_level and the file name for the training file.
     parser = argparse.ArgumentParser(description='ID3 Decision Tree Algorithm')
     parser.add_argument('-c', dest='confidence_level', type=float, action='store', nargs='?',
                         default=0.95, help='Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0')
@@ -69,9 +69,9 @@ def main():
     purity_string = (args.purity_method).lower()
 
     if purity_string == "ent" or purity_string == "entropy":
-        purity_method = dt_math.entropy
+        is_entropy = True
     elif purity_string == "gni":
-        purity_method = dt_math.gni_index
+        is_entropy = False
 
     # Initialized variables. Could be brought in via CLI options
     partition_size = 1
@@ -85,7 +85,7 @@ def train(training_file_name, partition_size):
 
     # Printing some details about what we are training on
     print("Confidence level: %f" % confidence_level)
-    print("purity_method: %s" % purity_method.__name__)
+    print("Purity method: %s" % ("entropy" if is_entropy else "gni_index"))
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
 
@@ -291,7 +291,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
     for feature_index in range(length_of_data):
         if feature_objects[feature_index] != "None":
-            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, purity_method)
+            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, is_entropy)
 
             # Getting the highest info gained feature
             if info_gained_entropy > highest_ig_num:
