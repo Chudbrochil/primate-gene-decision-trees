@@ -1,0 +1,5 @@
+kaggle1 - Testing accuracy was 91.8%
+Our first submission.
+
+kaggle2 - Accuracy 91.386%
+Changed a line in ID3 that does a deep copy of features.

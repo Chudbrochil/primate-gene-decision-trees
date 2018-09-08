@@ -14,11 +14,18 @@ import dt_math as dt_math
 import queue
 import copy
 
+# These can be set globally to change what we are using for confidence level
+# and whether we are using entropy or gni_index
+# TODO: Maybe we do or do not want these as globals
+confidence_level = 0.95
+split_method = dt_math.gni_index
 
 def main():
 
     # Loading training data and building an ID3 tree.
-    data = load_file("training.csv")
+    training_file_name = "training.csv"
+    print("Loading file: %s" % training_file_name)
+    data = load_file(training_file_name)
     partition_size = 1
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
@@ -26,12 +33,15 @@ def main():
     decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
 
     # Doing testing data now
-    testing_data = load_file("testing.csv", None)
+    testing_file_name = "testing.csv"
+    print("Loading file: %s" % testing_file_name)
+    testing_data = load_file(testing_file_name, None)
     test_features_split = split_features(testing_data, partition_size, False)
-
     testing_predictions = predict(decision_tree, test_features_split[:,:], 2001)
 
-    output_data(testing_predictions, "testing-2.csv")
+    output_file_name = "output2.csv"
+    print("Outputting to file: %s" % output_file_name)
+    output_data(testing_predictions, output_file_name)
 
 
     # VALIDATION IS HERE, TODO: DON'T DELETE
@@ -65,15 +75,12 @@ def output_data(predictions, file_name):
     file = open(file_name, "w")
     file.write("ID,Class\n")
     for tuple in predictions:
-        #print("Tuple incoming")
-        #print(tuple)
         file.write(str(tuple[1]) + "," + str(tuple[0]) + "\n")
 
     file.close()
 
 
 def predict(decision_tree, data, data_index):
-    print(len(data))
     predictions = []
     node = decision_tree
 
@@ -111,10 +118,6 @@ def predict(decision_tree, data, data_index):
                     node = decision_tree
                     data_index += 1
                     break
-
-
-    for prediction in predictions:
-        print(prediction)
 
     return predictions
 
@@ -187,7 +190,9 @@ def ID3(data_features_split, list_of_classes, feature_objects):
         return most_common_class
 
     # TODO: Remember, this might affect accuracy. This before was feature_objects[highest_ig_feature_index]
+    # TODO: This was kaggle1->kaggle2
     current_feature = feature_objects_copy[highest_ig_feature_index]
+
     #determine if this feature will be of statistical benefit using chi-square
     feature_is_beneficial = chi_square_test(data_features_split, current_feature, list_of_classes)
 
@@ -230,8 +235,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
     for feature_index in range(length_of_data):
         if feature_objects[feature_index] != "None":
-            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, dt_math.entropy)
-            #print("Info_gained_num: %f Feature_index: %d" % (info_gained_entropy, feature_index))
+            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, split_method)
 
             # Getting the highest info gained feature
             if info_gained_entropy > highest_ig_num:
@@ -256,7 +260,6 @@ def load_file(file_name, header_size = 1):
 
     file = pd.read_csv(file_name, header = header_size)
     data = file.values
-
     return data
 
 # Obtaining the classifications from our data. For the DNA data, should be ["IE", "EI", "N"]
@@ -400,7 +403,7 @@ def chi_square_test(data, current_feature, list_of_classes):
     degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
 
     #critical_value = compute_critical_value(degree_of_freedom, .95)
-    critical_value = dt_math.chi_square[degree_of_freedom][0.05]
+    critical_value = dt_math.chi_square[degree_of_freedom][confidence_level]
 
     # Evaluating whether or not the chi_square_value is within the confidence level or not
     if chi_square_value < critical_value:

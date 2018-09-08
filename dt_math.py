@@ -3,10 +3,10 @@ import numpy as np
 
 # The first index is degrees of freedom, the key afterwards is the confidence level
 # degrees of freedom should be max 10, max values = 6, max classes = 3 (3-1)*(6-1) = 10
-chi_square = [0, {0.05 : 3.84, 0.01 : 6.63}, {0.05 : 5.99, 0.01 : 9.21},
-{0.05 : 7.81, 0.01 : 11.34}, {0.05 : 9.49, 0.01 : 13.28}, {0.05 : 11.07, 0.01 : 15.09},
-{0.05 : 12.59, 0.01 : 16.81}, {0.05 : 14.07, 0.01 : 18.48}, {0.05 : 15.51, 0.01 : 20.09},
-{0.05 : 16.92, 0.01 : 21.67}, {0.05 : 18.31, 0.01 : 23.21}]
+chi_square = [0, {0.95 : 3.84, 0.99 : 6.63}, {0.95 : 5.99, 0.99 : 9.21},
+{0.95 : 7.81, 0.99 : 11.34}, {0.95 : 9.49, 0.99 : 13.28}, {0.95 : 11.07, 0.99 : 15.09},
+{0.95 : 12.59, 0.99 : 16.81}, {0.95 : 14.07, 0.99 : 18.48}, {0.95 : 15.51, 0.99 : 20.09},
+{0.95 : 16.92, 0.99 : 21.67}, {0.95 : 18.31, 0.99 : 23.21}]
 
 """ Caclulates entropy on current set of examples.
     Used for the entire dataset and each value of a feature.
@@ -26,9 +26,6 @@ def entropy(examples, classes):
 
     #determine each unique class and count how many times each is in set of examples
     label_totals = determine_class_totals(examples, classes)
-
-    #for i in range(len(label_totals)):
-    #    print(label_totals["class" + str(i)])
 
     #calculate entropy now that proportions are known (p_i)
     for i in range(numOfClasses):
@@ -63,22 +60,12 @@ def gni_index(examples, classes):
 def gain(examples, feature, classes, impurity_func):
     #determine impurity of entire dataset
     gain = impurity_func(examples, classes)
-    # if gain == 0:
-    #     print(feature.feature_index)
-    #     print(examples)
-
-
-    #print("entropy of entire set: " + str(gain))
 
     #determine impurity for each value in feature, sum together and return info gain
     for branch in feature.get_branches():
 
         #return subset of examples that only have this value
         subset_of_example = get_example_matching_value(examples, branch.get_branch_name(), feature)
-
-        # if(examples.shape[0] == 22):
-        #     print(subset_of_example.shape)
-        #print("shape of subset of a value for this feature" + str(subset_of_example.shape))
 
         total_subset_of_value = len(subset_of_example)
 
