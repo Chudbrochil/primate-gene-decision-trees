@@ -21,12 +21,20 @@ import decision_tree as dt
 import dt_math as dt_math
 import queue
 import copy
+import argparse
 
 # Possible things to do:
 # Capture base cases in ID3 into a method.
 # Try to use partition size of 2, i.e. different sized features
 # Implement random forests! Decent amount of work.
-# Add a CLI front end to input: confidence_level, impurity_func, training file, testing file
+
+
+# TODO:
+# When processing data, figure out which classification is most ubiqituous (most_common_class)
+# and then if data is empty, return this classification
+
+
+
 
 # These can be set globally to change what we are using for confidence level
 # and whether we are using entropy or gni_index
@@ -34,13 +42,41 @@ confidence_level = 0.90
 purity_method = dt_math.gni_index
 
 def main():
+    global confidence_level
+    global purity_method
+
+
+    parser = argparse.ArgumentParser(description='ID3 Decision Tree Algorithm')
+    parser.add_argument('-c', dest='confidence_level', type=float, action='store', nargs='?',
+                        default=0.95, help='Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0')
+    parser.add_argument('-p', dest='purity_method', type=str, action='store', nargs='?',
+                        default="entropy", help='Which purity method do you want. Acceptable values are entropy, ent, gni.')
+    parser.add_argument('-t', dest='training_file', type=str, action='store', nargs='?',
+                        default="training.csv", help='Specify the training file you want to use. Default is \"training.csv\"')
+    parser.add_argument('-r', dest='testing_file', type=str, action='store', nargs='?',
+                        default="testing.csv", help='Specify the testing file you want to use. Default is \"testing.csv\"')
+    parser.add_argument('-o', dest="output_file", type=str, action='store', nargs='?',
+                        default="output.csv", help='Specify where you want your output of classifications to go. Default is \"output.csv\"')
+
+    args = parser.parse_args()
+
+    confidence_level = args.confidence_level
+
+    if confidence_level not in [0.90, 0.95, 0.99, 0]:
+        print("Improper confidence level specified. Using confidence of 0.95.")
+        confidence_level = 0.95
+
+    purity_string = (args.purity_method).lower()
+
+    if purity_string == "ent" or purity_string == "entropy":
+        purity_method = dt_math.entropy
+    elif purity_string == "gni":
+        purity_method = dt_math.gni_index
+
     # Initialized variables. Could be brought in via CLI options
     partition_size = 1
-    training_file_name = "training.csv"
-    testing_file_name = "testing.csv"
-
-    decision_tree = train(training_file_name, partition_size)
-    test(decision_tree, testing_file_name, partition_size)
+    decision_tree = train(args.training_file, partition_size)
+    test(decision_tree, args.testing_file, partition_size, args.output_file)
 
 
 # train()
@@ -63,13 +99,12 @@ def train(training_file_name, partition_size):
 
 # test()
 # Collection method for classifying testing data against our decision tree.
-def test(decision_tree, testing_file_name, partition_size):
+def test(decision_tree, testing_file_name, partition_size, output_file_name):
     print("Loading file: %s" % testing_file_name)
     testing_data = load_file(testing_file_name, None)
     test_features_split = split_features(testing_data, partition_size, False)
     testing_predictions = predict(decision_tree, test_features_split[:,:], 2001)
 
-    output_file_name = "output2.csv"
     print("Outputting to file: %s" % output_file_name)
     output_predictions(testing_predictions, output_file_name)
 
@@ -189,17 +224,6 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split_copy, feature_objects_copy, list_of_classes)
 
-    if highest_ig_num == 0:
-        for example in data_features_split_copy:
-            print(example)
-
-    if highest_ig_num == 0:
-        print("No more important features")
-        most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
-        return most_common_class
-
-    # TODO: Remember, this might affect accuracy. This before was feature_objects[highest_ig_feature_index]
-    # TODO: This was kaggle1->kaggle2
     current_feature = feature_objects_copy[highest_ig_feature_index]
 
     #determine if this feature will be of statistical benefit using chi-square
