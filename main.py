@@ -6,7 +6,7 @@
 # This project is the first programming assignment in graduate level Machine Learning.
 # It involves implementing a decision tree and its logic from scratch.
 # We implemented the algorithms for entropy, gni index, information gained,
-# chi square, and ID3 decision trees. 
+# chi square, and ID3 decision trees.
 
 """
 Created on Fri Aug 24 14:38:29 2018
@@ -49,10 +49,12 @@ def main():
 
     output_file_name = "output2.csv"
     print("Outputting to file: %s" % output_file_name)
-    output_data(testing_predictions, output_file_name)
+    output_predictions(testing_predictions, output_file_name)
 
 
-def output_data(predictions, file_name):
+# output_predictions()
+# Takes our predictions and outputs them to a file for eventual submission.
+def output_predictions(predictions, file_name):
     file = open(file_name, "w")
     file.write("ID,Class\n")
     for tuple in predictions:
@@ -62,6 +64,9 @@ def output_data(predictions, file_name):
     file.close()
 
 
+# predict()
+# Traverses the decision tree that we made from training in order to classify
+# new data. Returns a full list of predictions (classifications) for a set of data.
 def predict(decision_tree, data, data_index):
     predictions = []
     node = decision_tree
@@ -94,9 +99,8 @@ def predict(decision_tree, data, data_index):
                     if recursive_prediction == None:
                         print(data_index)
                         traverse_tree(node)
-
-
                         #print(decision_tree)
+
                     predictions.append(recursive_prediction)
                     node = decision_tree
                     data_index += 1
@@ -105,6 +109,7 @@ def predict(decision_tree, data, data_index):
     return predictions
 
 
+# TODO:(Tristin) Comment this/clean it up
 #i couldn't do this above because of the examples.... frustratingly ugly... FIXXXXX
 def recursive_prediction_traversal(single_example, node, data_index):
     current_feature_data_value = single_example[node.feature_index]
@@ -125,6 +130,7 @@ def recursive_prediction_traversal(single_example, node, data_index):
                 return recursive_prediction_traversal(single_example, node, data_index)
 
 
+# TODO:(Anthony) Read this in-depth and make some comments.
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects):
 
@@ -207,6 +213,8 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     return node
 
+
+# get_highest_ig_feat()
 # Obtaining the highest information gain feature index from the remaining list of features
 def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
@@ -239,12 +247,16 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     return highest_ig_index, highest_ig_num
 
 
+# load_file()
+# Loads a particular csv file and returns it as a pandas data frame.
 def load_file(file_name, header_size = 1):
 
     file = pd.read_csv(file_name, header = header_size)
     data = file.values
     return data
 
+
+# get_classifications()
 # Obtaining the classifications from our data. For the DNA data, should be ["IE", "EI", "N"]
 def get_classifications(class_list):
     classes = set()
@@ -257,7 +269,10 @@ def get_classifications(class_list):
 
     return list_of_classes
 
-""" splits string of features every nth character denoted by partition_size """
+
+# split_features()
+# Splits the string of features every nth character denoted by partition_size.
+# Either returns a list of features or a list of features plus classifications.
 def split_features(data, partition_size = 1, is_training = True):
     features = data[:, 1]
     matrix_of_features = []
@@ -266,19 +281,22 @@ def split_features(data, partition_size = 1, is_training = True):
         split_sequence = [sequence[i:i+partition_size] for i in range(0, len(sequence), partition_size)]
         matrix_of_features.append(split_sequence)
 
-    # Concatenation of features and the "output". Output also known as labels
+    # Concatenation of features and the classifications
     if is_training == True:
         return np.c_[matrix_of_features, data[:, 2]]
+    # If we aren't training, then we won't have classifications to return
     else:
         return np.c_[matrix_of_features]
 
 
-
-# TODO: Anallyze complexity of the big gnarly loop in this method
+# create_features()
+# Goes through all of our training data and creates feature and branch objects
+# corresponding to our features and their child values (A,C,G,T, etc.).
 def create_features(data_features_split):
     list_of_features = []
 
     #go through each feature in data
+    # TODO: Is complexity of this loop fine? We could look to opimize...
     for i in range(0, data_features_split.shape[1]-1):
         feature = dt.Feature(i, [])
         #go through each example to determine each value of feature
@@ -303,7 +321,10 @@ def create_features(data_features_split):
 
     return list_of_features
 
-#a breadth first like algorithm to go through the decision tree
+
+# traverse_tree()
+# BFS-like algorithm to go through decision tree. This is used purely for
+# debugging purposes to see how the tree is being built/what it looks like.
 def traverse_tree(decision_tree):
     q = queue.Queue()
 
@@ -333,13 +354,14 @@ def traverse_tree(decision_tree):
             #print("Leaf: " + str(v))
 
 
-
-
 if __name__ == "__main__":
     main()
 
 
 
+
+
+# GRAVEYARD
 
 # TODO: This only goes to 1598 because we are doing "validation data"
 # decision_tree = ID3(data_features_split[:1598, :], list_of_classes, feature_objects)
