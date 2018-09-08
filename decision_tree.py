@@ -10,8 +10,6 @@ class Feature():
 
     def add_branch(self, branch_value):
         self.branches.append(Branch(branch_value))
-        #print("Added branch" + str(branch_value))
-        #self.branches.append(branch_value)
 
     def get_branches(self):
         return self.branches

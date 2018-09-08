@@ -6,10 +6,11 @@ import numpy as np
 
 # The first index is degrees of freedom, the key afterwards is the confidence level
 # degrees of freedom should be max 10, max values = 6, max classes = 3 (3-1)*(6-1) = 10
-chi_square = [0, {0.95 : 3.84, 0.99 : 6.63}, {0.95 : 5.99, 0.99 : 9.21},
-{0.95 : 7.81, 0.99 : 11.34}, {0.95 : 9.49, 0.99 : 13.28}, {0.95 : 11.07, 0.99 : 15.09},
-{0.95 : 12.59, 0.99 : 16.81}, {0.95 : 14.07, 0.99 : 18.48}, {0.95 : 15.51, 0.99 : 20.09},
-{0.95 : 16.92, 0.99 : 21.67}, {0.95 : 18.31, 0.99 : 23.21}]
+chi_square = [0, {0.90 : 2.71, 0.95 : 3.84, 0.99 : 6.63}, {0.90 : 4.61, 0.95 : 5.99, 0.99 : 9.21},
+{0.90 : 6.25, 0.95 : 7.81, 0.99 : 11.34}, {0.90 : 7.78, 0.95 : 9.49, 0.99 : 13.28}, {0.90 : 9.24, 0.95 : 11.07, 0.99 : 15.09},
+{0.90 : 10.64, 0.95 : 12.59, 0.99 : 16.81}, {0.90 : 12.02, 0.95 : 14.07, 0.99 : 18.48}, {0.90 : 13.36, 0.95 : 15.51, 0.99 : 20.09},
+{0.90 : 14.68, 0.95 : 16.92, 0.99 : 21.67}, {0.90 : 15.99, 0.95 : 18.31, 0.99 : 23.21}]
+# TODO: Possibly expand this table into a method if we want to use partition size of 2, likely need upto 36 degrees of freedom
 
 
 """ Caclulates entropy on current set of examples.

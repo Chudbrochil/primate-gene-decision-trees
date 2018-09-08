@@ -4,8 +4,36 @@ Our first submission.
 kaggle2 - Accuracy 91.386%
 Changed a line in ID3 that does a deep copy of features.
 
+
+
 kaggle5 - 91.8%
 first gni_index submission
 
 kaggle6 - 90.7%
 gni_index, 0.99 confidence
+
+
+
+kaggle1-0.95-ent-090818.csv
+kaggle2-0.95-ent-090818.csv
+kaggle3-0.95-ent-090818.csv
+kaggle4-0.95-ent-090818.csv
+kaggle5-0.95-gni-090818.csv
+kaggle6-0.99-gni-090818.csv
+kaggle7-0.99-ent-090818.csv
+kaggle8-0.90-ent-090818.csv
+testing_files.txt
+
+
+"Table" for the readme.
+
+Only including the max accuracy for each type
+confidence,func,accuracy
+0.99,entropy,.90756
+0.95,entropy,.91806
+0.90,entropy,.91806
+0.99,gni,.90756
+0.95,gni,.91806
+0.90,gni..91806
+
+

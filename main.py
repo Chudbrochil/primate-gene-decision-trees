@@ -22,15 +22,23 @@ import dt_math as dt_math
 import queue
 import copy
 
+# Possible things to do:
+# Capture base cases in ID3 into a method.
+# Try to use partition size of 2, i.e. different sized features
+# Clean up validation data code and capture it into a method.
+# Implement random forests! Decent amount of work.
+# Add a CLI front end to input: confidence_level, impurity_func, training file, testing file
+
 # These can be set globally to change what we are using for confidence level
 # and whether we are using entropy or gni_index
-# TODO: Maybe we do or do not want these as globals
-confidence_level = 0.95
-split_method = dt_math.entropy
+confidence_level = 0.90
+purity_method = dt_math.gni_index
 
 def main():
 
     # Loading training data and building an ID3 tree.
+    print("Confidence level: %f" % confidence_level)
+    print("purity_method: %s" % split_method.__name__)
     training_file_name = "training.csv"
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
@@ -228,7 +236,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 
     for feature_index in range(length_of_data):
         if feature_objects[feature_index] != "None":
-            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, split_method)
+            info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, purity_method)
 
             # Getting the highest info gained feature
             if info_gained_entropy > highest_ig_num:
