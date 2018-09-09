@@ -81,38 +81,58 @@ def main():
     #test(decision_tree, args.testing_file, partition_size, args.output_file)
 
     list_of_decision_trees = train_rf(args.training_file, partition_size)
-
+    print(list_of_decision_trees)
+    temp_file_name = "testing_file_RF_090818.csv"
+    test_rf(list_of_decision_trees, args.testing_file, partition_size, temp_file_name)
 
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 10
+    num_of_trees = 100
     list_of_data = []
     list_of_data_features_split = []
-    list_of_feature_objects = []
+    list_of_features = []
     list_of_decision_trees = []
 
     data = load_file(training_file_name)
-    print(data)
+    data_features_split = split_features(data, partition_size)
+    feature_objects = create_features(data_features_split)
+    #print(data)
 
-    # Gathering random sets of data
+    # Gathering random sets of data and features
     for x in range(num_of_trees):
         num_of_elements = random.randint(0, 400) + 400 # range from 400-800 out of 2000
-        np.random.shuffle(data)
-        print(data)
-        random_dataset = []
+        np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
-        for y in range(num_of_elements):
-            #print(data[y])
-            random_dataset.append(data[y])
+        #random features
+        num_of_features = random.randint(0, 60)
+        np.random.shuffle(feature_objects)
 
-        list_of_data.append(random_dataset)
+        #print(data)
+        # random_dataset = []
+        # random_features = []
+        #
+        # for y in range(num_of_elements):
+        #     #print(data[y])
+        #     random_dataset.append(data_features_split[y, :])
+        #
+        # for y in range(num_of_features):
+        #     random_features.append(feature_objects[y])
 
+        # print("Shape of random data: " + str(np.array(random_dataset).shape))
+        # print("Shape of random features: " + str(np.array(random_features).shape))
+
+        #the shuffled data for each tree, will have as many shuffled sets of data as there are trees
+        list_of_data.append(data_features_split[:num_of_elements, :])
+        list_of_features.append(feature_objects[:num_of_features])
+
+    print("Shape of lists of data: " + str(np.array(list_of_data).shape))
+    print("Shape of lists of features: " + str(np.array(list_of_features).shape))
 
     # TODO: Not randomizing the features in the first pass....
     # I will need to partially re-write split_features to take a random list
     # instead of iterating over all values
 
-
+    """ not sure about this now
     for dataset in list_of_data:
         #print(dataset)
         data_features_split = split_features(dataset, partition_size)
@@ -122,14 +142,77 @@ def train_rf(training_file_name, partition_size):
         feature_objects = create_features(data_feat_split)
         list_of_feature_objects.append(feature_objects)
 
-    list_of_classes = get_classifications(list_of_data_features_split[0][:,-1:])
+    """
 
+    print(list_of_data[0])
+
+    #for each tree, get the list of classifictions and pass ID3 a random subset of data and features
     for x in range(num_of_trees):
-        decision_tree = ID3(list_of_data_features_split[x][:, :], list_of_classes, list_of_feature_objects[x])
+        list_of_classes = get_classifications(list_of_data[x][:,-1:])
+        decision_tree = ID3(list_of_data[x], list_of_classes, list_of_features[x])
         list_of_decision_trees.append(decision_tree)
 
     return list_of_decision_trees
 
+def test_rf(decision_trees, testing_file_name, partition_size, output_file_name):
+    testing_data = load_file(testing_file_name, None)
+    test_features_split = split_features(testing_data, partition_size, False)
+    #list of predictions will be a list of lists for each trees predictions
+    list_of_predictions = []
+
+    #for every decision tree, make a list of predictions on testing data
+    for i in range(len(decision_trees)):
+        testing_predictions = predict(decision_trees[i], test_features_split, 2001)
+        list_of_predictions.append(testing_predictions)
+
+    most_popular_predictions = []
+
+    # 10 rows of predictions
+    """ [1  2  3]
+        [[N IE EI]
+         [IE N EI]
+         [N IE EI]]
+    """
+    temp_n = 0
+    temp_ie = 0
+    temp_ei = 0
+    #inefficient loop. looping cols x rows
+    for j in range(len(testing_data)):
+        #loop through each decision trees output for this column
+        for i in range(len(decision_trees)):
+            #TODO change this disgusting ghetto work around
+            if list_of_predictions[i][j] == None:
+                temp_n += 1
+            elif list_of_predictions[i][j][0] == 'N':
+                temp_n += 1
+            elif list_of_predictions[i][j][0] == 'IE':
+                temp_ie += 1
+            elif list_of_predictions[i][j][0] == 'EI':
+                temp_ei += 1
+        #determine which class had the most
+        max_class = 'N'
+        max_num = temp_n
+        if max_num < temp_ie:
+            if temp_ie < temp_ei:
+                max_class = 'EI'
+                max_num = temp_ei
+            else:
+                max_class = 'IE'
+                max_num = temp_ie
+        elif max_num < temp_ei:
+            if temp_ei < temp_ie:
+                max_class = 'IE'
+                max_num = temp_ie
+            else:
+                max_class = 'EI'
+                max_num = temp_ei
+        #set most_popular_predictions
+        most_popular_predictions.append((max_class, list_of_predictions[i][j][1]))
+        temp_n = 0
+        temp_ie = 0
+        temp_ei = 0
+
+    output_predictions(most_popular_predictions, output_file_name)
 
 # train()
 # Collection method for building an ID3 tree with training data.
@@ -340,7 +423,9 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     highest_ig_num = 0.0
     highest_ig_index = -1
 
-    for feature_index in range(length_of_data):
+    #TODO changed range from length_of_data -> len(feature_objects) as we won't always have 60 features with RF
+
+    for feature_index in range(len(feature_objects)):
         if feature_objects[feature_index] != "None":
             info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, is_entropy)
 
@@ -367,6 +452,13 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 def predict(decision_tree, data, data_index):
     predictions = []
     node = decision_tree
+
+    """rf edge case addition """
+    if type(node) == str:
+        for example in data:
+            data_index += 1
+            predictions.append((node, data_index))
+        return predictions
 
     for example in data:
         #get this current features value at the index of the current node of the tree
@@ -395,7 +487,7 @@ def predict(decision_tree, data, data_index):
                     # TODO: Bug is exposed here when we have no confidence level. Must fix.
                     if recursive_prediction == None:
                         print(data_index)
-                        traverse_tree(node)
+                        #traverse_tree(node)
                         #print(decision_tree)
 
                     predictions.append(recursive_prediction)
