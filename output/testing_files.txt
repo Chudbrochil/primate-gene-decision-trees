@@ -12,6 +12,9 @@ first gni_index submission
 kaggle6 - 90.7%
 gni_index, 0.99 confidence
 
+kaggle15 - 96.008%
+entropy, 0.95 conf,
+random forests with 250 trees, 600 +- 400 elements, 20-40 features
 
 
 kaggle1-0.95-ent-090818.csv

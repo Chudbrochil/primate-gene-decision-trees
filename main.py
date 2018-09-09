@@ -23,11 +23,11 @@ import queue
 import copy
 import argparse
 import random
+import operator
 
 # Possible things to do:
 # Capture base cases in ID3 into a method.
 # Try to use partition size of 2, i.e. different sized features
-# Implement random forests! Decent amount of work.
 
 
 # TODO:
@@ -39,7 +39,7 @@ import random
 
 # These can be set globally to change what we are using for confidence level
 # and whether we are using entropy or gni_index
-confidence_level = 0.90
+confidence_level = 0.95
 is_entropy = True
 
 def main():
@@ -75,19 +75,22 @@ def main():
     elif impurity_string == "gni":
         is_entropy = False
 
-    # Initialized variables. Could be brought in via CLI options
+    # Running standard decision tree
     partition_size = 1
     #decision_tree = train(args.training_file, partition_size)
     #test(decision_tree, args.testing_file, partition_size, args.output_file)
 
+    # Running random forests, numerous decision trees
     list_of_decision_trees = train_rf(args.training_file, partition_size)
-    print(list_of_decision_trees)
-    temp_file_name = "testing_file_RF_090818.csv"
-    test_rf(list_of_decision_trees, args.testing_file, partition_size, temp_file_name)
+    test_rf(list_of_decision_trees, args.testing_file, partition_size, args.output_file)
 
+
+# train_rf()
+# Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 100
+    # Anthony: Takes approx. 6-7 minutes to run 250 trees on my laptop
+    num_of_trees = 20
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
@@ -96,30 +99,15 @@ def train_rf(training_file_name, partition_size):
     data = load_file(training_file_name)
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
-    #print(data)
 
     # Gathering random sets of data and features
     for x in range(num_of_trees):
-        num_of_elements = random.randint(0, 400) + 400 # range from 400-800 out of 2000
+        num_of_elements = random.randint(0, 400) + 600 # range from 400-800 out of 2000
         np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
         #random features
-        num_of_features = random.randint(0, 60)
+        num_of_features = random.randint(20, 40)
         np.random.shuffle(feature_objects)
-
-        #print(data)
-        # random_dataset = []
-        # random_features = []
-        #
-        # for y in range(num_of_elements):
-        #     #print(data[y])
-        #     random_dataset.append(data_features_split[y, :])
-        #
-        # for y in range(num_of_features):
-        #     random_features.append(feature_objects[y])
-
-        # print("Shape of random data: " + str(np.array(random_dataset).shape))
-        # print("Shape of random features: " + str(np.array(random_features).shape))
 
         #the shuffled data for each tree, will have as many shuffled sets of data as there are trees
         list_of_data.append(data_features_split[:num_of_elements, :])
@@ -128,40 +116,29 @@ def train_rf(training_file_name, partition_size):
     print("Shape of lists of data: " + str(np.array(list_of_data).shape))
     print("Shape of lists of features: " + str(np.array(list_of_features).shape))
 
-    # TODO: Not randomizing the features in the first pass....
-    # I will need to partially re-write split_features to take a random list
-    # instead of iterating over all values
-
-    """ not sure about this now
-    for dataset in list_of_data:
-        #print(dataset)
-        data_features_split = split_features(dataset, partition_size)
-        list_of_data_features_split.append(data_features_split)
-
-    for data_feat_split in list_of_data_features_split:
-        feature_objects = create_features(data_feat_split)
-        list_of_feature_objects.append(feature_objects)
-
-    """
-
-    print(list_of_data[0])
-
     #for each tree, get the list of classifictions and pass ID3 a random subset of data and features
     for x in range(num_of_trees):
         list_of_classes = get_classifications(list_of_data[x][:,-1:])
         decision_tree = ID3(list_of_data[x], list_of_classes, list_of_features[x])
         list_of_decision_trees.append(decision_tree)
+        print(x) # This prints out which tree we are on
 
     return list_of_decision_trees
 
+
+# test_rf()
+# Random Forests' collection method for running against testing data
 def test_rf(decision_trees, testing_file_name, partition_size, output_file_name):
+
     testing_data = load_file(testing_file_name, None)
     test_features_split = split_features(testing_data, partition_size, False)
+
     #list of predictions will be a list of lists for each trees predictions
     list_of_predictions = []
 
     #for every decision tree, make a list of predictions on testing data
-    for i in range(len(decision_trees)):
+    length_of_decision_trees = len(decision_trees)
+    for i in range(length_of_decision_trees):
         testing_predictions = predict(decision_trees[i], test_features_split, 2001)
         list_of_predictions.append(testing_predictions)
 
@@ -173,46 +150,34 @@ def test_rf(decision_trees, testing_file_name, partition_size, output_file_name)
          [IE N EI]
          [N IE EI]]
     """
-    temp_n = 0
-    temp_ie = 0
-    temp_ei = 0
+
     #inefficient loop. looping cols x rows
     for j in range(len(testing_data)):
+
+        class_dict = {}
+        class_dict['N'] = 0
+        class_dict['IE'] = 0
+        class_dict['EI'] = 0
+
         #loop through each decision trees output for this column
-        for i in range(len(decision_trees)):
+        for i in range(length_of_decision_trees):
+
             #TODO change this disgusting ghetto work around
-            if list_of_predictions[i][j] == None:
-                temp_n += 1
-            elif list_of_predictions[i][j][0] == 'N':
-                temp_n += 1
+            if list_of_predictions[i][j] == None or list_of_predictions[i][j][0] == 'N':
+                class_dict['N'] = class_dict['N'] + 1
             elif list_of_predictions[i][j][0] == 'IE':
-                temp_ie += 1
+                class_dict['IE'] = class_dict['IE'] + 1
             elif list_of_predictions[i][j][0] == 'EI':
-                temp_ei += 1
-        #determine which class had the most
-        max_class = 'N'
-        max_num = temp_n
-        if max_num < temp_ie:
-            if temp_ie < temp_ei:
-                max_class = 'EI'
-                max_num = temp_ei
-            else:
-                max_class = 'IE'
-                max_num = temp_ie
-        elif max_num < temp_ei:
-            if temp_ei < temp_ie:
-                max_class = 'IE'
-                max_num = temp_ie
-            else:
-                max_class = 'EI'
-                max_num = temp_ei
+                class_dict['EI'] = class_dict['EI'] + 1
+
+        # Looks at all items in a dictionary and grabs the key corresponding to the max value
+        max_class = max(class_dict.items(), key=operator.itemgetter(1))[0]
+
         #set most_popular_predictions
         most_popular_predictions.append((max_class, list_of_predictions[i][j][1]))
-        temp_n = 0
-        temp_ie = 0
-        temp_ei = 0
 
     output_predictions(most_popular_predictions, output_file_name)
+
 
 # train()
 # Collection method for building an ID3 tree with training data.
@@ -220,7 +185,7 @@ def train(training_file_name, partition_size):
 
     # Printing some details about what we are training on
     print("Confidence level: %f" % confidence_level)
-    print("Impurity method: %s" % ("entropy" if is_entropy else "gni_index"))
+    print("Impurity method: %s" % ("entropy" if is_entropy else "gni_index")) # TODO: This seems bugged.
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
 
