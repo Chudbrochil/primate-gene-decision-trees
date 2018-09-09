@@ -44,6 +44,7 @@ import operator
 # and whether we are using entropy or gni_index
 confidence_level = 0.95
 is_entropy = True
+most_popular_classification_global = ''
 
 def main():
     global confidence_level
@@ -197,12 +198,13 @@ def test_rf(decision_trees, testing_file_name, partition_size, output_file_name)
 # train()
 # Collection method for building an ID3 tree with training data.
 def train(training_file_name, partition_size):
-
+    global most_popular_classification_global
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
+    most_popular_classification_global = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
     decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
     return decision_tree
 
@@ -294,7 +296,6 @@ def get_classifications(class_list):
 # TODO:(Anthony) Read this in-depth and make some comments.
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects):
-
     data_features_split_copy = copy.deepcopy(data_features_split)
     feature_objects_copy = copy.deepcopy(feature_objects)
 
@@ -332,15 +333,15 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     # "The attribute from Attributes that best* classifies Examples"
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split_copy, feature_objects_copy, list_of_classes)
 
-    current_feature = feature_objects_copy[highest_ig_feature_index]
+    if confidence_level != 0:
+        current_feature = feature_objects_copy[highest_ig_feature_index]
+        #determine if this feature will be of statistical benefit using chi-square
+        feature_is_beneficial = dt_math.chi_square_test(data_features_split, current_feature, list_of_classes, confidence_level)
 
-    #determine if this feature will be of statistical benefit using chi-square
-    feature_is_beneficial = dt_math.chi_square_test(data_features_split, current_feature, list_of_classes, confidence_level)
-
-    #if the feature is not beneficial, return a leaf node of the most popular class
-    if not feature_is_beneficial:
-        most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
-        return most_common_class
+        #if the feature is not beneficial, return a leaf node of the most popular class
+        if not feature_is_beneficial:
+            most_common_class = dt_math.determine_class_totals(data_features_split, list_of_classes, True)
+            return most_common_class
 
     node = feature_objects_copy[highest_ig_feature_index]
     feature_objects_copy[highest_ig_feature_index] = "None"
@@ -422,6 +423,7 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
 # Traverses the decision tree that we made from training in order to classify
 # new data. Returns a full list of predictions (classifications) for a set of data.
 def predict(decision_tree, data, data_index):
+    global most_popular_classification_global
     predictions = []
     node = decision_tree
 
@@ -458,7 +460,7 @@ def predict(decision_tree, data, data_index):
 
                     # TODO: Bug is exposed here when we have no confidence level. Must fix.
                     if recursive_prediction == None:
-                        print(data_index)
+                        recursive_prediction = (most_popular_classification_global, data_index)
                         #traverse_tree(node)
                         #print(decision_tree)
 
