@@ -198,19 +198,12 @@ def test_rf(decision_trees, testing_file_name, partition_size, output_file_name)
 # Collection method for building an ID3 tree with training data.
 def train(training_file_name, partition_size):
 
-    # Printing some details about what we are training on
-    if is_entropy == True:
-        impurity_string = "Entropy"
-    else:
-        impurity_string = "GNI Index"
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
-
     data_features_split = split_features(data, partition_size)
     feature_objects = create_features(data_features_split)
     list_of_classes = get_classifications(data_features_split[:,-1:])
     decision_tree = ID3(data_features_split[:, :], list_of_classes, feature_objects)
-
     return decision_tree
 
 
@@ -222,7 +215,6 @@ def test(decision_tree, testing_file_name, partition_size, output_file_name):
     testing_data = load_file(testing_file_name, None)
     test_features_split = split_features(testing_data, partition_size, False)
     testing_predictions = predict(decision_tree, test_features_split[:,:], 2001)
-
     print("Outputting to file: %s" % output_file_name)
     output_predictions(testing_predictions, output_file_name)
 
@@ -230,7 +222,6 @@ def test(decision_tree, testing_file_name, partition_size, output_file_name):
 # load_file()
 # Loads a particular csv file and returns it as a pandas data frame.
 def load_file(file_name, header_size = 1):
-
     file = pd.read_csv(file_name, header = header_size)
     data = file.values
     return data
