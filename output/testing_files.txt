@@ -16,6 +16,31 @@ kaggle15 - 96.008%
 entropy, 0.95 conf,
 random forests with 250 trees, 600 +- 400 elements, 20-40 features
 
+kaggle17 - 96.218%
+gni, 0.95 conf,
+random forests with 300 trees, 600 +- 400 elements, 15-45 features
+
+
+kaggle18 - 94.2%
+gni, 0.95 conf,
+rf with 300 trees, 600 +- 400 elements, 22-40 feats
+
+
+kaggle19 - 94.1%
+gni, 0.95 conf,
+rf with 300 trees, 600 +- 500 elements, 10-50 feats
+
+kaggle20 - 95.2%
+gni, 0.95 conf,
+rf with 150 trees, 200 +- 300 elements, 15-45 feats
+
+kaggle21 -
+gni, 0.95 conf,
+rf with 250 trees, 200 +- 500 elements, 15-45 feats
+
+kaggle22 - 94.3%
+gni, 0.90 conf,
+rf with 250 trees, 500-800 ele, 10-50feats
 
 kaggle1-0.95-ent-090818.csv
 kaggle2-0.95-ent-090818.csv

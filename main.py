@@ -7,6 +7,9 @@
 # It involves implementing a decision tree and its logic from scratch.
 # We implemented the algorithms for entropy, gni index, information gained,
 # chi square, and ID3 decision trees.
+#
+# Additionally, we implemented some naive version of random forests into this
+# program as well.
 
 """
 Created on Fri Aug 24 14:38:29 2018
@@ -90,7 +93,7 @@ def main():
 def train_rf(training_file_name, partition_size):
 
     # Anthony: Takes approx. 6-7 minutes to run 250 trees on my laptop
-    num_of_trees = 20
+    num_of_trees = 250
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
@@ -102,11 +105,11 @@ def train_rf(training_file_name, partition_size):
 
     # Gathering random sets of data and features
     for x in range(num_of_trees):
-        num_of_elements = random.randint(0, 400) + 600 # range from 400-800 out of 2000
+        num_of_elements = random.randint(0, 300) + 500
         np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
         #random features
-        num_of_features = random.randint(20, 40)
+        num_of_features = random.randint(10, 50)
         np.random.shuffle(feature_objects)
 
         #the shuffled data for each tree, will have as many shuffled sets of data as there are trees
@@ -143,13 +146,6 @@ def test_rf(decision_trees, testing_file_name, partition_size, output_file_name)
         list_of_predictions.append(testing_predictions)
 
     most_popular_predictions = []
-
-    # 10 rows of predictions
-    """ [1  2  3]
-        [[N IE EI]
-         [IE N EI]
-         [N IE EI]]
-    """
 
     #inefficient loop. looping cols x rows
     for j in range(len(testing_data)):
