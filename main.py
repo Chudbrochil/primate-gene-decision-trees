@@ -22,6 +22,7 @@ import dt_math as dt_math
 import queue
 import copy
 import argparse
+import random
 
 # Possible things to do:
 # Capture base cases in ID3 into a method.
@@ -76,8 +77,58 @@ def main():
 
     # Initialized variables. Could be brought in via CLI options
     partition_size = 1
-    decision_tree = train(args.training_file, partition_size)
-    test(decision_tree, args.testing_file, partition_size, args.output_file)
+    #decision_tree = train(args.training_file, partition_size)
+    #test(decision_tree, args.testing_file, partition_size, args.output_file)
+
+    list_of_decision_trees = train_rf(args.training_file, partition_size)
+
+
+def train_rf(training_file_name, partition_size):
+
+    num_of_trees = 10
+    list_of_data = []
+    list_of_data_features_split = []
+    list_of_feature_objects = []
+    list_of_decision_trees = []
+
+    data = load_file(training_file_name)
+    print(data)
+
+    # Gathering random sets of data
+    for x in range(num_of_trees):
+        num_of_elements = random.randint(0, 400) + 400 # range from 400-800 out of 2000
+        np.random.shuffle(data)
+        print(data)
+        random_dataset = []
+
+        for y in range(num_of_elements):
+            #print(data[y])
+            random_dataset.append(data[y])
+
+        list_of_data.append(random_dataset)
+
+
+    # TODO: Not randomizing the features in the first pass....
+    # I will need to partially re-write split_features to take a random list
+    # instead of iterating over all values
+
+
+    for dataset in list_of_data:
+        #print(dataset)
+        data_features_split = split_features(dataset, partition_size)
+        list_of_data_features_split.append(data_features_split)
+
+    for data_feat_split in list_of_data_features_split:
+        feature_objects = create_features(data_feat_split)
+        list_of_feature_objects.append(feature_objects)
+
+    list_of_classes = get_classifications(list_of_data_features_split[0][:,-1:])
+
+    for x in range(num_of_trees):
+        decision_tree = ID3(list_of_data_features_split[x][:, :], list_of_classes, list_of_feature_objects[x])
+        list_of_decision_trees.append(decision_tree)
+
+    return list_of_decision_trees
 
 
 # train()
@@ -145,7 +196,6 @@ def create_features(data_features_split):
     list_of_features = []
 
     #go through each feature in data
-    # TODO: Is complexity of this loop fine? We could look to opimize...
     for i in range(0, data_features_split.shape[1]-1):
         feature = dt.Feature(i, [])
 
