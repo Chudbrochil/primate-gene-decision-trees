@@ -88,31 +88,50 @@ def train_rf(training_file_name, partition_size):
     num_of_trees = 10
     list_of_data = []
     list_of_data_features_split = []
-    list_of_feature_objects = []
+    list_of_features = []
     list_of_decision_trees = []
 
     data = load_file(training_file_name)
-    print(data)
+    data_features_split = split_features(data, partition_size)
+    feature_objects = create_features(data_features_split)
+    #print(data)
 
-    # Gathering random sets of data
+    # Gathering random sets of data and features
     for x in range(num_of_trees):
         num_of_elements = random.randint(0, 400) + 400 # range from 400-800 out of 2000
-        np.random.shuffle(data)
-        print(data)
-        random_dataset = []
+        np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
-        for y in range(num_of_elements):
-            #print(data[y])
-            random_dataset.append(data[y])
+        #random features
+        num_of_features = random.randint(0, 60)
+        np.random.shuffle(feature_objects)
 
-        list_of_data.append(random_dataset)
+        #print(data)
+        # random_dataset = []
+        # random_features = []
+        #
+        # for y in range(num_of_elements):
+        #     #print(data[y])
+        #     random_dataset.append(data_features_split[y, :])
+        #
+        # for y in range(num_of_features):
+        #     random_features.append(feature_objects[y])
 
+        # print("Shape of random data: " + str(np.array(random_dataset).shape))
+        # print("Shape of random features: " + str(np.array(random_features).shape))
+
+        #the shuffled data for each tree, will have as many shuffled sets of data as there are trees
+        list_of_data.append(data_features_split[:num_of_elements, :])
+        list_of_features.append(feature_objects[:num_of_features])
+
+    print("Shape of lists of data: " + str(np.array(list_of_data).shape))
+    print("Shape of lists of features: " + str(np.array(list_of_features).shape))
 
     # TODO: Not randomizing the features in the first pass....
     # I will need to partially re-write split_features to take a random list
     # instead of iterating over all values
 
 
+    """ not sure about this now
     for dataset in list_of_data:
         #print(dataset)
         data_features_split = split_features(dataset, partition_size)
@@ -122,10 +141,14 @@ def train_rf(training_file_name, partition_size):
         feature_objects = create_features(data_feat_split)
         list_of_feature_objects.append(feature_objects)
 
-    list_of_classes = get_classifications(list_of_data_features_split[0][:,-1:])
+    """
 
+    print(list_of_data[0])
+
+    #for each tree, get the list of classifictions and pass ID3 a random subset of data and features
     for x in range(num_of_trees):
-        decision_tree = ID3(list_of_data_features_split[x][:, :], list_of_classes, list_of_feature_objects[x])
+        list_of_classes = get_classifications(list_of_data[x][:,-1:])
+        decision_tree = ID3(list_of_data[x], list_of_classes, list_of_features[x])
         list_of_decision_trees.append(decision_tree)
 
     return list_of_decision_trees
@@ -340,7 +363,9 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     highest_ig_num = 0.0
     highest_ig_index = -1
 
-    for feature_index in range(length_of_data):
+    #TODO changed range from length_of_data -> len(feature_objects) as we won't always have 60 features with RF
+
+    for feature_index in range(len(feature_objects)):
         if feature_objects[feature_index] != "None":
             info_gained_entropy = dt_math.gain(data_features_split, feature_objects[feature_index], list_of_classes, is_entropy)
 
