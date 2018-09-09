@@ -42,26 +42,9 @@ kaggle22 - 94.3%
 gni, 0.90 conf,
 rf with 250 trees, 500-800 ele, 10-50feats
 
-kaggle1-0.95-ent-090818.csv
-kaggle2-0.95-ent-090818.csv
-kaggle3-0.95-ent-090818.csv
-kaggle4-0.95-ent-090818.csv
-kaggle5-0.95-gni-090818.csv
-kaggle6-0.99-gni-090818.csv
-kaggle7-0.99-ent-090818.csv
-kaggle8-0.90-ent-090818.csv
-testing_files.txt
+kaggle23 - 95.16%
+gni, 0.95 conf,
+rf with 500 trees, 200-1000 ele, 15-45 feats
 
-
-"Table" for the readme.
-
-Only including the max accuracy for each type
-confidence,func,accuracy
-0.99,entropy,.90756
-0.95,entropy,.91806
-0.90,entropy,.91806
-0.99,gni,.90756
-0.95,gni,.91806
-0.90,gni..91806
 
 

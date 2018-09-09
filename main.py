@@ -47,10 +47,13 @@ is_entropy = True
 
 def main():
     global confidence_level
-    global purity_method
+    global is_entropy
 
     # Parsing command line arguments such as confidence_level and the file name for the training file.
-    parser = argparse.ArgumentParser(description='ID3 Decision Tree Algorithm')
+    description_string = "Anthony Galczak/Tristin Glunt\n" \
+                         "CS529 - Machine Learning - Project 1 Decision Trees\n" \
+                         "ID3 Decision Tree Algorithm and Random Forest implementation."
+    parser = argparse.ArgumentParser(description=description_string, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-c', dest='confidence_level', type=float, action='store', nargs='?',
                         default=0.95, help='Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0')
     parser.add_argument('-p', dest='purity_method', type=str, action='store', nargs='?',
@@ -61,7 +64,7 @@ def main():
                         default="testing.csv", help='Specify the testing file you want to use. Default is \"testing.csv\"')
     parser.add_argument('-o', dest="output_file", type=str, action='store', nargs='?',
                         default="output.csv", help='Specify where you want your output of classifications to go. Default is \"output.csv\"')
-
+    parser.add_argument("-f", "--rf", action='store_true', help='Specify this option if you want to use random forests. Otherwise we will build one tree only.')
     args = parser.parse_args()
 
     confidence_level = args.confidence_level
@@ -78,22 +81,40 @@ def main():
     elif impurity_string == "gni":
         is_entropy = False
 
-    # Running standard decision tree
     partition_size = 1
-    #decision_tree = train(args.training_file, partition_size)
-    #test(decision_tree, args.testing_file, partition_size, args.output_file)
 
-    # Running random forests, numerous decision trees
-    list_of_decision_trees = train_rf(args.training_file, partition_size)
-    test_rf(list_of_decision_trees, args.testing_file, partition_size, args.output_file)
+    status_print(confidence_level, impurity_string, args.training_file, args.testing_file, args.output_file, args.rf)
+
+    # Running standard decision tree
+    if args.rf == True:
+        list_of_decision_trees = train_rf(args.training_file, partition_size)
+        test_rf(list_of_decision_trees, args.testing_file, partition_size, args.output_file)
+    # Running random forests, numerous decision trees.
+    else:
+        decision_tree = train(args.training_file, partition_size)
+        test(decision_tree, args.testing_file, partition_size, args.output_file)
+
+
+# status_print()
+# Prints out to the user what they have selected as options for running this program.
+def status_print(confidence_level, impurity_string, training_file, testing_file, output_file, rf):
+    print("You have selected the following options:")
+    print("Confidence level: %f" % confidence_level)
+    print("Impurity Method: %s" % impurity_string)
+    print("Training data file name: %s" % training_file)
+    print("Testing data file name: %s" % testing_file)
+    print("Prediction output file name: %s" % output_file)
+    if rf == True:
+        print("Random forests.")
+    else:
+        print("Single ID3 decision tree.")
 
 
 # train_rf()
 # Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    # Anthony: Takes approx. 6-7 minutes to run 250 trees on my laptop
-    num_of_trees = 250
+    num_of_trees = 500
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
@@ -105,19 +126,18 @@ def train_rf(training_file_name, partition_size):
 
     # Gathering random sets of data and features
     for x in range(num_of_trees):
-        num_of_elements = random.randint(0, 300) + 500
+        num_of_elements = random.randint(0, 400) + 600
         np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
         #random features
-        num_of_features = random.randint(10, 50)
+        num_of_features = random.randint(15, 45)
         np.random.shuffle(feature_objects)
 
         #the shuffled data for each tree, will have as many shuffled sets of data as there are trees
         list_of_data.append(data_features_split[:num_of_elements, :])
         list_of_features.append(feature_objects[:num_of_features])
 
-    print("Shape of lists of data: " + str(np.array(list_of_data).shape))
-    print("Shape of lists of features: " + str(np.array(list_of_features).shape))
+    print("Training on %d trees." % num_of_trees)
 
     #for each tree, get the list of classifictions and pass ID3 a random subset of data and features
     for x in range(num_of_trees):
@@ -158,7 +178,6 @@ def test_rf(decision_trees, testing_file_name, partition_size, output_file_name)
         #loop through each decision trees output for this column
         for i in range(length_of_decision_trees):
 
-            #TODO change this disgusting ghetto work around
             if list_of_predictions[i][j] == None or list_of_predictions[i][j][0] == 'N':
                 class_dict['N'] = class_dict['N'] + 1
             elif list_of_predictions[i][j][0] == 'IE':
@@ -180,8 +199,10 @@ def test_rf(decision_trees, testing_file_name, partition_size, output_file_name)
 def train(training_file_name, partition_size):
 
     # Printing some details about what we are training on
-    print("Confidence level: %f" % confidence_level)
-    print("Impurity method: %s" % ("entropy" if is_entropy else "gni_index")) # TODO: This seems bugged.
+    if is_entropy == True:
+        impurity_string = "Entropy"
+    else:
+        impurity_string = "GNI Index"
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
 
@@ -194,7 +215,8 @@ def train(training_file_name, partition_size):
 
 
 # test()
-# Collection method for classifying testing data against our decision tree.
+# Collection method for classifying testing data against our decision tree that
+# we built earlier.
 def test(decision_tree, testing_file_name, partition_size, output_file_name):
     print("Loading file: %s" % testing_file_name)
     testing_data = load_file(testing_file_name, None)
@@ -379,12 +401,10 @@ def get_highest_ig_feat(data_features_split, feature_objects, list_of_classes):
     list_of_igs = []
 
     # Getting how many characters long each example is
-    length_of_data = data_features_split.shape[1] - 1 #TODO: Do we want to expand this to n-grams?
+    length_of_data = data_features_split.shape[1] - 1
 
     highest_ig_num = 0.0
     highest_ig_index = -1
-
-    #TODO changed range from length_of_data -> len(feature_objects) as we won't always have 60 features with RF
 
     for feature_index in range(len(feature_objects)):
         if feature_objects[feature_index] != "None":

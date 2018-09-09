@@ -14,6 +14,8 @@ class Feature():
     def get_branches(self):
         return self.branches
 
+# This is a branch in a tree that also corresponds to values in the
+# given decision tree algorithms (ID3).
 class Branch():
     def __init__(self, branch_value):
         self.branch_value = branch_value

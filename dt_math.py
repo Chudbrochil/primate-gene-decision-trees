@@ -10,11 +10,13 @@ chi_square = [0, {0.90 : 2.71, 0.95 : 3.84, 0.99 : 6.63}, {0.90 : 4.61, 0.95 : 5
 {0.90 : 6.25, 0.95 : 7.81, 0.99 : 11.34}, {0.90 : 7.78, 0.95 : 9.49, 0.99 : 13.28}, {0.90 : 9.24, 0.95 : 11.07, 0.99 : 15.09},
 {0.90 : 10.64, 0.95 : 12.59, 0.99 : 16.81}, {0.90 : 12.02, 0.95 : 14.07, 0.99 : 18.48}, {0.90 : 13.36, 0.95 : 15.51, 0.99 : 20.09},
 {0.90 : 14.68, 0.95 : 16.92, 0.99 : 21.67}, {0.90 : 15.99, 0.95 : 18.31, 0.99 : 23.21}]
-# TODO: Possibly expand this table into a method if we want to use partition size of 2, likely need upto 36 degrees of freedom
 
 
 # impurity()
-# TODO: Write comments explaining this is combined entropy and gni_index
+# This is the combined functionality of entropy and gni_index.
+# It gets the proportionality of each classification and then loops over
+# all of the classes to calcuulate the impurity value. If is_entropy is True,
+# then the math will be entropy, otherwise the math will be gni_index.
 def impurity(examples, classes, is_entropy):
 
     # Starting value for entropy is 0, 1 for gni_index
@@ -46,11 +48,12 @@ def impurity(examples, classes, is_entropy):
 
     return impurity_value
 
-""" Gain calculates the information gain of each feature on current passed in examples
-   gain(data, A) -> will look through values Y & Z for feature A.
-   feature - an object... with this features column index in the
-   dataset and needs to have a list of it's values....
-"""
+
+# gain()
+# Gain calculates the information gain of each feature on current passed in examples
+# gain(data, A) -> will look through values Y & Z for feature A.
+# feature - an object... with this features column index in the
+# dataset and needs to have a list of it's values.
 def gain(examples, feature, classes, is_entropy):
     #determine impurity of entire dataset
     gain = impurity(examples, classes, is_entropy)
@@ -72,6 +75,7 @@ def gain(examples, feature, classes, is_entropy):
 
 
 #TODO can easily replace dictionaries with list if preferred
+# TODO: (Tristin) Comment this.
 def determine_class_totals(examples, classes, get_most_common_class = False):
     labels = {}
     label_totals = {}
