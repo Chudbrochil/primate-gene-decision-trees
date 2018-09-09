@@ -66,11 +66,12 @@ def main():
         print("Improper confidence level specified. Using confidence of 0.95.")
         confidence_level = 0.95
 
-    purity_string = (args.purity_method).lower()
+    impurity_string = (args.purity_method).lower()
 
-    if purity_string == "ent" or purity_string == "entropy":
+    # Using the argument to select whether we are using gni or entropy
+    if impurity_string == "ent" or impurity_string == "entropy":
         is_entropy = True
-    elif purity_string == "gni":
+    elif impurity_string == "gni":
         is_entropy = False
 
     # Initialized variables. Could be brought in via CLI options
@@ -85,7 +86,7 @@ def train(training_file_name, partition_size):
 
     # Printing some details about what we are training on
     print("Confidence level: %f" % confidence_level)
-    print("Purity method: %s" % ("entropy" if is_entropy else "gni_index"))
+    print("Impurity method: %s" % ("entropy" if is_entropy else "gni_index"))
     print("Loading file: %s" % training_file_name)
     data = load_file(training_file_name)
 

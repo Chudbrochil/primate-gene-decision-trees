@@ -13,63 +13,15 @@ chi_square = [0, {0.90 : 2.71, 0.95 : 3.84, 0.99 : 6.63}, {0.90 : 4.61, 0.95 : 5
 # TODO: Possibly expand this table into a method if we want to use partition size of 2, likely need upto 36 degrees of freedom
 
 
-# """ Caclulates entropy on current set of examples.
-#     Used for the entire dataset and each value of a feature.
-#     examples - the dataset containing features and labels.
-#     classes - list of possible classifications of an example.
-#     based on eq. 3.3 pg. 59 of Machine Learning by Tom Mitchell
-#  """
-# def entropy(examples, classes):
-#
-#     entropy = 0
-#     total_examples = len(examples)
-#     numOfClasses = len(classes)
-#
-#     if total_examples == 0:
-#         return 0
-#
-#     #determine each unique class and count how many times each is in set of examples
-#     label_totals = determine_class_totals(examples, classes)
-#
-#     #calculate entropy now that proportions are known (p_i)
-#     for i in range(numOfClasses):
-#         p_i = label_totals["class" + str(i)] / total_examples
-#         if p_i != 0:
-#             entropy = entropy - (p_i * math.log(p_i, 2))
-#
-#     return entropy
-#
-#
-# def gni_index(examples, classes):
-#     gni = 1
-#
-#     #determine each unique class and count how many times each is in set of examples
-#     label_totals = determine_class_totals(examples, classes)
-#
-#     total_examples = len(examples)
-#     numOfClasses = len(classes)
-#
-#     if total_examples == 0:
-#         return 0
-#
-#     #calculate entropy now that proportions are known (p_i)
-#     for i in range(numOfClasses):
-#         p_i = label_totals["class" + str(i)] / total_examples
-#         if p_i != 0:
-#             gni = gni - (p_i ** 2)
-#
-#     return gni
-
-
-# purity()
+# impurity()
 # TODO: Write comments explaining this is combined entropy and gni_index
-def purity(examples, classes, is_entropy):
+def impurity(examples, classes, is_entropy):
 
     # Starting value for entropy is 0, 1 for gni_index
     if is_entropy == True:
-        purity_value = 0
+        impurity_value = 0
     else:
-        purity_value = 1
+        impurity_value = 1
 
     # Getting the proportionality for each classification
     label_totals = determine_class_totals(examples, classes)
@@ -85,12 +37,14 @@ def purity(examples, classes, is_entropy):
     for i in range(total_classes):
         p_i = label_totals["class" + str(i)] / total_examples
         if p_i != 0:
+            # Entropy
             if is_entropy == True:
-                purity_value = purity_value - (p_i * math.log(p_i, 2))
+                impurity_value = impurity_value - (p_i * math.log(p_i, 2))
+            # GNI Index
             else:
-                purity_value = purity_value - (p_i ** 2)
+                impurity_value = impurity_value - (p_i ** 2)
 
-    return purity_value
+    return impurity_value
 
 """ Gain calculates the information gain of each feature on current passed in examples
    gain(data, A) -> will look through values Y & Z for feature A.
@@ -99,7 +53,7 @@ def purity(examples, classes, is_entropy):
 """
 def gain(examples, feature, classes, is_entropy):
     #determine impurity of entire dataset
-    gain = purity(examples, classes, is_entropy)
+    gain = impurity(examples, classes, is_entropy)
 
     #determine impurity for each value in feature, sum together and return info gain
     for branch in feature.get_branches():
@@ -111,7 +65,7 @@ def gain(examples, feature, classes, is_entropy):
 
         #math of information gain
         proportion_of_subset = total_subset_of_value / len(examples) * 1.0
-        subset_entropy = proportion_of_subset * purity(subset_of_example, classes, is_entropy)
+        subset_entropy = proportion_of_subset * impurity(subset_of_example, classes, is_entropy)
         gain = gain - subset_entropy
 
     return gain
