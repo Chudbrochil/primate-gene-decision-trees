@@ -33,13 +33,6 @@ import operator
 # Try to use partition size of 2, i.e. different sized features
 
 
-# TODO:
-# When processing data, figure out which classification is most ubiqituous (most_common_class)
-# and then if data is empty, return this classification
-
-
-
-
 # These can be set globally to change what we are using for confidence level
 # and whether we are using entropy or gni_index
 confidence_level = 0.95
@@ -65,7 +58,8 @@ def main():
                         default="testing.csv", help='Specify the testing file you want to use. Default is \"testing.csv\"')
     parser.add_argument('-o', dest="output_file", type=str, action='store', nargs='?',
                         default="output.csv", help='Specify where you want your output of classifications to go. Default is \"output.csv\"')
-    parser.add_argument("-f", "--rf", action='store_true', help='Specify this option if you want to use random forests. Otherwise we will build one tree only.')
+    parser.add_argument("-f", "--rf", action='store_true', help='Specify this option if you want to use random forests. Otherwise we will build one tree only.\
+                                                                 Please note that building random forests takes time. Expect 300 trees to take 5 to 10 minutes.')
     args = parser.parse_args()
 
     confidence_level = args.confidence_level
@@ -295,8 +289,14 @@ def get_classifications(class_list):
     return list_of_classes
 
 
-# TODO:(Anthony) Read this in-depth and make some comments.
-# "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
+# ID3()
+# The primary algorithm of this program. ID3 is the decision tree code that navigates and
+# builds up the tree. There are base cases to catch when only one classification is
+# remaining or if we ran out of features (nodes) to place in the tree.
+# From there, it recurses back into an ID3 call to continue traversing down the tree.
+#
+# From the book, our parameters match up to theirs as such:
+# "data_features_split" is examples, "list_of_classes" is target_attribute, "attributes" is feature_objects
 def ID3(data_features_split, list_of_classes, feature_objects):
     data_features_split_copy = copy.deepcopy(data_features_split)
     feature_objects_copy = copy.deepcopy(feature_objects)
@@ -316,7 +316,6 @@ def ID3(data_features_split, list_of_classes, feature_objects):
             break
 
     if found_different is False:
-        #print("Leaf value: " + str(classification))
         return classification
 
     #if there are no more features to look at, return with a leaf of the most common class
@@ -352,7 +351,6 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     for branch in node.get_branches():
         # Gathering all examples that match this branch value, returns a numpy matrix
         subset_data_feature_match = np.array(dt_math.get_example_matching_value(data_features_split_copy, branch.get_branch_name(), node))
-        #print("Shape of branch " + str(branch.get_branch_name()) + ":" + str(subset_data_feature_match.shape) + ", parent id: " + str(node.feature_index))
 
         # If the examples list is empty(ie., there are no examples left that have this value after trimming so many subsets)
         if subset_data_feature_match.shape[0] == 0:
@@ -460,11 +458,10 @@ def predict(decision_tree, data, data_index):
                     node = branch.child_feature
                     recursive_prediction = recursive_prediction_traversal(example, node, data_index)
 
-                    # TODO: Bug is exposed here when we have no confidence level. Must fix.
+                    # If we got to a recursion step and it returned no classification, then
+                    # assign it to the most popular classification so far.
                     if recursive_prediction == None:
                         recursive_prediction = (most_popular_classification_global, data_index)
-                        #traverse_tree(node)
-                        #print(decision_tree)
 
                     predictions.append(recursive_prediction)
                     node = decision_tree

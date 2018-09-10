@@ -174,7 +174,6 @@ def chi_square_test(data, current_feature, list_of_classes, confidence_level):
     """ determine if chi-square value if in or out of distrubution """
     degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
 
-    #critical_value = compute_critical_value(degree_of_freedom, .95)
     critical_value = chi_square[degree_of_freedom][confidence_level]
 
     # Evaluating whether or not the chi_square_value is within the confidence level or not
