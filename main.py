@@ -11,11 +11,6 @@
 # Additionally, we implemented some naive version of random forests into this
 # program as well.
 
-"""
-Created on Fri Aug 24 14:38:29 2018
-
-@author: Tristin G. & Anthony G.
-"""
 
 import pandas as pd
 import math
@@ -33,13 +28,6 @@ import operator
 # Try to use partition size of 2, i.e. different sized features
 
 
-# TODO:
-# When processing data, figure out which classification is most ubiqituous (most_common_class)
-# and then if data is empty, return this classification
-
-
-
-
 # These can be set globally to change what we are using for confidence level
 # and whether we are using entropy or gni_index
 confidence_level = 0.95
@@ -54,6 +42,9 @@ def main():
     description_string = "Anthony Galczak/Tristin Glunt\n" \
                          "CS529 - Machine Learning - Project 1 Decision Trees\n" \
                          "ID3 Decision Tree Algorithm and Random Forest implementation."
+    rf_string = "Specify this option if you want to use random forests.\n" \
+                "Otherwise we will build one tree only.\n" \
+                "Note that building random forests takes time. Expect 300 trees to take 5-10 minutes."
     parser = argparse.ArgumentParser(description=description_string, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-c', dest='confidence_level', type=float, action='store', nargs='?',
                         default=0.95, help='Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0')
@@ -65,13 +56,13 @@ def main():
                         default="testing.csv", help='Specify the testing file you want to use. Default is \"testing.csv\"')
     parser.add_argument('-o', dest="output_file", type=str, action='store', nargs='?',
                         default="output.csv", help='Specify where you want your output of classifications to go. Default is \"output.csv\"')
-    parser.add_argument("-f", "--rf", action='store_true', help='Specify this option if you want to use random forests. Otherwise we will build one tree only.')
+    parser.add_argument("-f", "--rf", action='store_true', help=rf_string)
     args = parser.parse_args()
 
     confidence_level = args.confidence_level
 
     if confidence_level not in [0.90, 0.95, 0.99, 0]:
-        print("Improper confidence level specified. Using confidence of 0.95.")
+        print("Improper confidence level specified. Using default confidence of 0.95.")
         confidence_level = 0.95
 
     impurity_string = (args.purity_method).lower()
@@ -84,7 +75,7 @@ def main():
 
     partition_size = 1
 
-    status_print(confidence_level, impurity_string, args.training_file, args.testing_file, args.output_file, args.rf)
+    status_print(confidence_level, args.training_file, args.testing_file, args.output_file, args.rf)
 
     # Running standard decision tree
     if args.rf == True:
@@ -98,10 +89,14 @@ def main():
 
 # status_print()
 # Prints out to the user what they have selected as options for running this program.
-def status_print(confidence_level, impurity_string, training_file, testing_file, output_file, rf):
+def status_print(confidence_level, training_file, testing_file, output_file, rf):
     print("You have selected the following options:")
     print("Confidence level: %f" % confidence_level)
-    print("Impurity Method: %s" % impurity_string)
+    if is_entropy == True:
+        impurity_string = "Entropy"
+    else:
+        impurity_string = "GNI Index"
+    print("Impurity Method: %s" % (impurity_string))
     print("Training data file name: %s" % training_file)
     print("Testing data file name: %s" % testing_file)
     print("Prediction output file name: %s" % output_file)
@@ -110,12 +105,14 @@ def status_print(confidence_level, impurity_string, training_file, testing_file,
     else:
         print("Single ID3 decision tree.")
 
+    print("\n")
+
 
 # train_rf()
 # Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 500
+    num_of_trees = 300
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
@@ -127,7 +124,7 @@ def train_rf(training_file_name, partition_size):
 
     # Gathering random sets of data and features
     for x in range(num_of_trees):
-        num_of_elements = random.randint(0, 400) + 600
+        num_of_elements = random.randint(0, 600) + 400
         np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
         #random features
@@ -293,12 +290,14 @@ def get_classifications(class_list):
     return list_of_classes
 
 
-# TODO:(Anthony) Read this in-depth and make some comments.
 # ID3()
-# this algorithm builds the decision_tree based on the data it's given. This will return a
-# traversable tree for which predictions can be made on given an entry that matches the data
-# the decision_tree was built on
-# "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
+# The primary algorithm of this program. ID3 is the decision tree code that navigates and
+# builds up the tree. There are base cases to catch when only one classification is
+# remaining or if we ran out of features (nodes) to place in the tree.
+# From there, it recurses back into an ID3 call to continue traversing down the tree.
+#
+# From the book, our parameters match up to theirs as such:
+# "data_features_split" is examples, "list_of_classes" is target_attribute, "attributes" is feature_objects
 def ID3(data_features_split, list_of_classes, feature_objects):
     data_features_split_copy = copy.deepcopy(data_features_split)
     feature_objects_copy = copy.deepcopy(feature_objects)
@@ -331,7 +330,6 @@ def ID3(data_features_split, list_of_classes, feature_objects):
     for branch in node.get_branches():
         # Gathering all examples that match this branch value, returns a numpy matrix
         subset_data_feature_match = np.array(dt_math.get_example_matching_value(data_features_split_copy, branch.get_branch_name(), node))
-        #print("Shape of branch " + str(branch.get_branch_name()) + ":" + str(subset_data_feature_match.shape) + ", parent id: " + str(node.feature_index))
 
         # If the examples list is empty(ie., there are no examples left that have this value after trimming so many subsets)
         if subset_data_feature_match.shape[0] == 0:
@@ -454,6 +452,8 @@ def predict(decision_tree, data, data_index):
                     node = branch.child_feature
                     recursive_prediction = recursive_prediction_traversal(example, node, data_index)
 
+                    # If we got to a recursion step and it returned no classification, then
+                    # assign it to the most popular classification so far.
                     if recursive_prediction == None:
                         recursive_prediction = (most_popular_classification_global, data_index)
 
