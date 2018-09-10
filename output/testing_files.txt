@@ -46,5 +46,38 @@ kaggle23 - 95.16%
 gni, 0.95 conf,
 rf with 500 trees, 200-1000 ele, 15-45 feats
 
+kaggle27 - 94.5%
+gni, 0.90 conf,
+rf with 500 trees, 600-1200 ele, 20-40 feats
+
+kaggle28 - 96.008%
+gni, 0.95 conf
+rf with 500 trees, 200-800 ele, 20-40 feats
+
+
+kaggle30 - 93.487%
+gni, 0.95 conf,
+rf with 600 trees, 200-600 ele, 15-45 feats
+
+kaggle31 - 89%
+gni, 0.99 conf,
+rf with 600 trees, 200-600 ele, 10-50 feats
+
+
+So far my analysis for tuning random forests for this problem...
+95% CL looks good, 99% conf looks bad.
+accuracy doesn't seem to improve past ~200 trees.
+
+
+kaggle32 - 96.008%
+gni, 0.95 conf,
+rf with 300 trees, 400-1000 ele, 15-45 feats
+
+
+It appears I have found some sort of sweet spot for random forests tuning, but I may
+have hit a soft limit of our implementation. We'd likely need more features to be
+randomized into this set and perhaps more data.
+I think I'm giving up on 97-98% for now.
+
 
 

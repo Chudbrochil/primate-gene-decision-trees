@@ -110,12 +110,14 @@ def status_print(confidence_level, impurity_string, training_file, testing_file,
     else:
         print("Single ID3 decision tree.")
 
+    print("\n")
+
 
 # train_rf()
 # Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 500
+    num_of_trees = 300
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
@@ -127,7 +129,7 @@ def train_rf(training_file_name, partition_size):
 
     # Gathering random sets of data and features
     for x in range(num_of_trees):
-        num_of_elements = random.randint(0, 400) + 600
+        num_of_elements = random.randint(0, 600) + 400
         np.random.shuffle(data_features_split) #shuffle data so range of 400-800 is always different data
 
         #random features
