@@ -294,45 +294,26 @@ def get_classifications(class_list):
 
 
 # TODO:(Anthony) Read this in-depth and make some comments.
+# ID3()
+# this algorithm builds the decision_tree based on the data it's given. This will return a
+# traversable tree for which predictions can be made on given an entry that matches the data
+# the decision_tree was built on
 # "examples" is the actual data, "target_attribute" is the classifications, "attributes" are list of features
 def ID3(data_features_split, list_of_classes, feature_objects):
     data_features_split_copy = copy.deepcopy(data_features_split)
     feature_objects_copy = copy.deepcopy(feature_objects)
 
-    # If all of the remaining examples have the same classification, return that classification
-    # This is the "base case"
-    initial_classification = "None"
-    found_different = False
-    for example in data_features_split_copy:
+    # there are multiple base cases in which we return a classification
+    base_case = "None"
+    base_case = id3_base_cases(data_features_split, list_of_classes, feature_objects)
+    if base_case != "None":
+        return base_case
 
-        classification = example[-1:]
-
-        if initial_classification == "None":
-            initial_classification = classification
-        elif classification != initial_classification:
-            found_different = True
-            break
-
-    if found_different is False:
-        #print("Leaf value: " + str(classification))
-        return classification
-
-    #if there are no more features to look at, return with a leaf of the most common class
-    #this is really ugly, but since we're not removing things for the list, not much else to do
-    all_features_used = True
-    for feature in feature_objects_copy:
-        if feature != "None":
-            all_features_used = False
-            break
-
-    if all_features_used:
-        print("All features have been used, returning most common class")
-        most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
-        return most_common_class
-
-    # "The attribute from Attributes that best* classifies Examples"
+    # "The attribute from Attributes that best* classifies Examples", use info gain to
+    # determine the best feature
     highest_ig_feature_index, highest_ig_num = get_highest_ig_feat(data_features_split_copy, feature_objects_copy, list_of_classes)
 
+    # check if we're using chi-square or not
     if confidence_level != 0:
         current_feature = feature_objects_copy[highest_ig_feature_index]
         #determine if this feature will be of statistical benefit using chi-square
@@ -364,27 +345,42 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     return node
 
+# id3id3_base_cases() checks each base case for the ID3 algorithm. If any are true,
+# this function will return a leaf that's a classification. If none are, it returns "None"
+def id3_base_cases(data_features_split_copy, list_of_classes, feature_objects_copy):
 
-# TODO:(Tristin) Comment this/clean it up
-#i couldn't do this above because of the examples.... frustratingly ugly... FIXXXXX
-def recursive_prediction_traversal(single_example, node, data_index):
-    current_feature_data_value = single_example[node.feature_index]
+    # If all of the remaining examples have the same classification, return that classification
+    initial_classification = "None"
+    found_different = False
+    for example in data_features_split_copy:
 
-    for branch in node.get_branches():
-        if current_feature_data_value == branch.branch_value:
-            if type(branch.child_feature) is not dt.Feature:
-                if type(branch.child_feature) is not str:
-                    temp_prediction = branch.child_feature[0]
-                else:
-                    temp_prediction = branch.child_feature
+        #classification equals the last element in our example
+        classification = example[-1:]
 
-                tuple_prediction = (temp_prediction, data_index)
-                return tuple_prediction
-            #move on to next feature if values matched by child is a feature
-            else:
-                node = branch.child_feature
-                return recursive_prediction_traversal(single_example, node, data_index)
+        if initial_classification == "None":
+            initial_classification = classification
+        elif classification != initial_classification:
+            found_different = True
+            break
 
+    if found_different is False:
+        #print("Leaf value: " + str(classification))
+        return classification
+
+    #if there are no more features to look at, return with a leaf of the most common class
+    #this is really ugly, but since we're not removing things for the list, not much else to do
+    all_features_used = True
+    for feature in feature_objects_copy:
+        if feature != "None":
+            all_features_used = False
+            break
+
+    if all_features_used:
+        print("All features have been used, returning most common class")
+        most_common_class = dt_math.determine_class_totals(data_features_split_copy, list_of_classes, True)
+        return most_common_class
+
+    return "None"
 
 # get_highest_ig_feat()
 # Obtaining the highest information gain feature index from the remaining list of features
@@ -458,11 +454,8 @@ def predict(decision_tree, data, data_index):
                     node = branch.child_feature
                     recursive_prediction = recursive_prediction_traversal(example, node, data_index)
 
-                    # TODO: Bug is exposed here when we have no confidence level. Must fix.
                     if recursive_prediction == None:
                         recursive_prediction = (most_popular_classification_global, data_index)
-                        #traverse_tree(node)
-                        #print(decision_tree)
 
                     predictions.append(recursive_prediction)
                     node = decision_tree
@@ -471,6 +464,32 @@ def predict(decision_tree, data, data_index):
 
     return predictions
 
+# recursive_prediction_traversal()
+# takes in the current example being predicted on and recursively iterates down the tree
+# until a branch is met that has a classification is its child. This should all be one
+# predict method but, I had a mindblock writing the entire predict function recursively
+# when we had to go through each example. Thus, the predict function handles going through
+# each example while this recursive function goes all the way down the tree on one example
+def recursive_prediction_traversal(single_example, node, data_index):
+    current_feature_data_value = single_example[node.feature_index]
+
+    # go through each value for this current feature
+    for branch in node.get_branches():
+        # if the current value for this feature from the data entry is equal to the trees branch value
+        if current_feature_data_value == branch.branch_value:
+            #if the child of this branch isn't another feature, we've found a classificaiton
+            if type(branch.child_feature) is not dt.Feature:
+                if type(branch.child_feature) is not str:
+                    temp_prediction = branch.child_feature[0]
+                else:
+                    temp_prediction = branch.child_feature
+
+                tuple_prediction = (temp_prediction, data_index)
+                return tuple_prediction
+            #if the child feature is a feature we need to recurse down a level
+            else:
+                node = branch.child_feature
+                return recursive_prediction_traversal(single_example, node, data_index)
 
 # output_predictions()
 # Takes our predictions and outputs them to a file for eventual submission.

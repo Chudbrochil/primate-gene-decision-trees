@@ -74,17 +74,20 @@ def gain(examples, feature, classes, is_entropy):
     return gain
 
 
-#TODO can easily replace dictionaries with list if preferred
-# TODO: (Tristin) Comment this.
+# determine_class_totals takes in a 2D data set, a list of possible classes, and a boolean
+# flag. If the boolean flag is set to false, will return the total occurrences for each class
+# in the data. If true, will only return whichever Class occurred the most.
 def determine_class_totals(examples, classes, get_most_common_class = False):
     labels = {}
     label_totals = {}
 
     numOfClasses = len(classes)
 
+    #initialize each class in the dictionary
     for i in range(numOfClasses):
         labels["class" + str(i)] = classes[i]
 
+    #initialize the total count for each class
     for i in range(numOfClasses):
         label_totals["class" + str(i)] = 0
 
@@ -101,6 +104,7 @@ def determine_class_totals(examples, classes, get_most_common_class = False):
     most_common_class_amount = 0
     most_common_class = ""
 
+    # if wanting only the most popular class
     if get_most_common_class:
         for i in range(numOfClasses):
             if label_totals["class" + str(i)] > most_common_class_amount:
@@ -108,15 +112,21 @@ def determine_class_totals(examples, classes, get_most_common_class = False):
                 most_common_class = labels["class" + str(i)]
         return most_common_class
     else:
+        # return all counts for each class
         return label_totals
 
-
+# get_example_matching_value() takes in a dataset, the current name for the value we're
+# delimiting on, and the feature where this value occurs, so we only look at that feature
+# in the data. This will return a subset of the data where it only has the given value
+# (branch_name) for the passed in feature. Mainly used by info_gain when looping through
+# values for a feature and calculating each values impurity.
 def get_example_matching_value(examples, branch_name, feature):
     subset_of_value = []
 
     #go through each example
     for example in examples:
         #go through only feature passed into gain and check value
+        # if the value for this feature matches, take this entire example into the subset
         if(example[feature.feature_index] is branch_name):
             subset_of_value.append(example)
 
@@ -124,14 +134,48 @@ def get_example_matching_value(examples, branch_name, feature):
     subset_of_value = np.array(subset_of_value)
     return subset_of_value
 
-
+# chi_square_test() is the implementation of the chi_square function and the table. This
+# function helps ID3 not overfit the data by introducing a statistical early-stopping
+# method for when the next feature is not beneficial up to a certain confidence_level
 def chi_square_test(data, current_feature, list_of_classes, confidence_level):
+    #determine the class totals for this entire feature
     class_totals = determine_class_totals(data, list_of_classes, False)
+    #calculate the needed table for chi-square
+    variable_matrix_real, variable_matrix_expected = build_variable_matrix_tables(data, current_feature, list_of_classes, class_totals)
 
-    """ build table of real and expected values for current feature """
-    total_data_size = len(data) #TODO: might have to take only 1st dimension of data
+    chi_square_value = 0
 
-    #build a matrix the dimensions of, (total_values_for_feature, total_classes)
+    #for every value in this feature
+    for i in range(len(current_feature.get_branches())):
+        #for every class this value has
+        for j in range(len(class_totals)):
+            #don't divide by 0
+            if variable_matrix_expected[i][j] == 0:
+                continue
+            chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
+
+    # determine the degree_of_freedom for this feature
+    degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
+
+    #compute critical_value by using the chi_square distribution table
+    critical_value = chi_square[degree_of_freedom][confidence_level]
+
+    # Evaluating whether or not the chi_square_value is within the confidence level
+    if chi_square_value < critical_value:
+        # this feature is not statistically beneficial
+        return False
+    else:
+        return True
+
+# build_variable_matrix_tables() computes the table needed for chi_square. This table
+# counts the number of real appearances for a particular value and the possible classes
+# for that value. It also calculates the expected number of appearances of a value with
+# a classification. These two matrices are used by the chi-square function
+def build_variable_matrix_tables(data, current_feature, list_of_classes, class_totals):
+
+    total_data_size = len(data)
+
+    #build a zero matrix the dimensions of, (total_values_for_feature, total_classes)
     variable_matrix_real = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
     variable_matrix_expected = np.array([[0 for x in range(len(class_totals))] for y in range(len(current_feature.get_branches()))])
 
@@ -152,33 +196,18 @@ def chi_square_test(data, current_feature, list_of_classes, confidence_level):
     #calculate expected values
     counter = 0
     for branch in current_feature.get_branches():
+        # returns subset of data matching the current value of this feature
         subset_data_feature_match = get_example_matching_value(data, branch.get_branch_name(), current_feature)
 
+        # get the number of total appearances of this value for this feature
         total_subset_size = len(subset_data_feature_match)
 
+        # get the total of each class for this subset
         class_totals_for_subvalue = determine_class_totals(subset_data_feature_match, list_of_classes, False)
 
+        #calculate expected values for every class for this current value
         for j in range(len(class_totals_for_subvalue)):
             variable_matrix_expected[counter][j] = total_subset_size * (class_totals["class" + str(j)] / total_data_size)
         counter += 1
 
-    chi_square_value = 0
-    """ run chi-square function over built table """
-    #for every class compute the different values chi square
-    for i in range(len(current_feature.get_branches())):
-        for j in range(len(class_totals)):
-            if variable_matrix_expected[i][j] == 0:
-                continue
-            chi_square_value += ((variable_matrix_real[i][j] - variable_matrix_expected[i][j]) ** 2) / variable_matrix_expected[i][j]
-
-    """ determine if chi-square value if in or out of distrubution """
-    degree_of_freedom = (len(list_of_classes) - 1)  * (len(current_feature.get_branches()) - 1)
-
-    #critical_value = compute_critical_value(degree_of_freedom, .95)
-    critical_value = chi_square[degree_of_freedom][confidence_level]
-
-    # Evaluating whether or not the chi_square_value is within the confidence level or not
-    if chi_square_value < critical_value:
-        return False
-    else:
-        return True
+    return variable_matrix_real, variable_matrix_expected
