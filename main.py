@@ -343,7 +343,7 @@ def ID3(data_features_split, list_of_classes, feature_objects):
 
     return node
 
-# id3id3_base_cases() checks each base case for the ID3 algorithm. If any are true,
+# id3_base_cases() checks each base case for the ID3 algorithm. If any are true,
 # this function will return a leaf that's a classification. If none are, it returns "None"
 def id3_base_cases(data_features_split_copy, list_of_classes, feature_objects_copy):
 
@@ -362,7 +362,6 @@ def id3_base_cases(data_features_split_copy, list_of_classes, feature_objects_co
             break
 
     if found_different is False:
-        #print("Leaf value: " + str(classification))
         return classification
 
     #if there are no more features to look at, return with a leaf of the most common class
