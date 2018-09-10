@@ -11,11 +11,6 @@
 # Additionally, we implemented some naive version of random forests into this
 # program as well.
 
-"""
-Created on Fri Aug 24 14:38:29 2018
-
-@author: Tristin G. & Anthony G.
-"""
 
 import pandas as pd
 import math
@@ -47,6 +42,9 @@ def main():
     description_string = "Anthony Galczak/Tristin Glunt\n" \
                          "CS529 - Machine Learning - Project 1 Decision Trees\n" \
                          "ID3 Decision Tree Algorithm and Random Forest implementation."
+    rf_string = "Specify this option if you want to use random forests.\n" \
+                "Otherwise we will build one tree only.\n" \
+                "Note that building random forests takes time. Expect 300 trees to take 5-10 minutes."
     parser = argparse.ArgumentParser(description=description_string, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-c', dest='confidence_level', type=float, action='store', nargs='?',
                         default=0.95, help='Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0')
@@ -58,14 +56,13 @@ def main():
                         default="testing.csv", help='Specify the testing file you want to use. Default is \"testing.csv\"')
     parser.add_argument('-o', dest="output_file", type=str, action='store', nargs='?',
                         default="output.csv", help='Specify where you want your output of classifications to go. Default is \"output.csv\"')
-    parser.add_argument("-f", "--rf", action='store_true', help='Specify this option if you want to use random forests. Otherwise we will build one tree only.\
-                                                                 Please note that building random forests takes time. Expect 300 trees to take 5 to 10 minutes.')
+    parser.add_argument("-f", "--rf", action='store_true', help=rf_string)
     args = parser.parse_args()
 
     confidence_level = args.confidence_level
 
     if confidence_level not in [0.90, 0.95, 0.99, 0]:
-        print("Improper confidence level specified. Using confidence of 0.95.")
+        print("Improper confidence level specified. Using default confidence of 0.95.")
         confidence_level = 0.95
 
     impurity_string = (args.purity_method).lower()
@@ -78,7 +75,7 @@ def main():
 
     partition_size = 1
 
-    status_print(confidence_level, impurity_string, args.training_file, args.testing_file, args.output_file, args.rf)
+    status_print(confidence_level, args.training_file, args.testing_file, args.output_file, args.rf)
 
     # Running standard decision tree
     if args.rf == True:
@@ -92,10 +89,14 @@ def main():
 
 # status_print()
 # Prints out to the user what they have selected as options for running this program.
-def status_print(confidence_level, impurity_string, training_file, testing_file, output_file, rf):
+def status_print(confidence_level, training_file, testing_file, output_file, rf):
     print("You have selected the following options:")
     print("Confidence level: %f" % confidence_level)
-    print("Impurity Method: %s" % impurity_string)
+    if is_entropy == True:
+        impurity_string = "Entropy"
+    else:
+        impurity_string = "GNI Index"
+    print("Impurity Method: %s" % (impurity_string))
     print("Training data file name: %s" % training_file)
     print("Testing data file name: %s" % testing_file)
     print("Prediction output file name: %s" % output_file)
