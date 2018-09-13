@@ -8,8 +8,8 @@
 # We implemented the algorithms for entropy, gni index, information gained,
 # chi square, and ID3 decision trees.
 #
-# Additionally, we implemented some naive version of random forests into this
-# program as well.
+# Additionally, we implemented a naive version of random forests to gain
+# greater accuracy. This was not required of the project.
 
 
 import pandas as pd
@@ -23,13 +23,8 @@ import argparse
 import random
 import operator
 
-# Possible things to do:
-# Capture base cases in ID3 into a method.
-# Try to use partition size of 2, i.e. different sized features
 
-
-# These can be set globally to change what we are using for confidence level
-# and whether we are using entropy or gni_index
+# Globals that only need to be set once per execution.
 confidence_level = 0.95
 is_entropy = True
 most_popular_classification_global = ''
@@ -112,7 +107,7 @@ def status_print(confidence_level, training_file, testing_file, output_file, rf)
 # Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 300
+    num_of_trees = 65
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
