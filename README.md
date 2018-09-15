@@ -66,7 +66,7 @@ This help menu should guide you through any questions about the parameter usage,
 but I will display a few examples for edification.
 
 
-python main.py -c 0.95 -p entropy -t training.csv -r testing.csv -o output.csv
+python main.py -c 0.95 -i entropy -t training.csv -r testing.csv -o output.csv
 The above will run the default settings that you'll get with no flags set.
 
 python main.py -c 0.99 -i gni -t training.csv -r testing.csv -o rf_test.csv -f

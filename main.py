@@ -107,7 +107,7 @@ def status_print(confidence_level, training_file, testing_file, output_file, rf)
 # Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 5000
+    num_of_trees = 100
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
@@ -216,7 +216,11 @@ def test(decision_tree, testing_file_name, partition_size, output_file_name):
 # load_file()
 # Loads a particular csv file and returns it as a pandas data frame.
 def load_file(file_name, header_size = 1):
-    file = pd.read_csv(file_name, header = header_size)
+    try:
+        file = pd.read_csv(file_name, header = header_size)
+    except:
+        print("ERROR: We had a problem opening your file. Try again.")
+        exit(0)
     data = file.values
     return data
 
@@ -488,7 +492,11 @@ def recursive_prediction_traversal(single_example, node, data_index):
 # output_predictions()
 # Takes our predictions and outputs them to a file for eventual submission.
 def output_predictions(predictions, file_name):
-    file = open(file_name, "w")
+    try:
+        file = open(file_name, "w")
+    except:
+        print("ERROR: We had a problem writing to this file. Try again.\n")
+        exit(0)
     file.write("ID,Class\n")
     for tuple in predictions:
         #print(tuple)
