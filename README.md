@@ -34,14 +34,14 @@ the correct libraries and Python version to be able to run the file.
 
 By running this naive execution, you will run the default settings of the
 program, which are the following:
-Confidence_level: 0.95, Purity_method: Entropy, Training_file: training.csv,
+Confidence_level: 0.95, Impurity_method: Entropy, Training_file: training.csv,
 Testing_file: testing.csv, Output_file: output.csv, no random forests (1 tree).
 
 All of these parameters are configurable via the command line interface.
 If you type "python main.py --help" you will receive a help menu like this:
 
 
-usage: main.py [-h] [-c [CONFIDENCE_LEVEL]] [-p [PURITY_METHOD]]
+usage: main.py [-h] [-c [CONFIDENCE_LEVEL]] [-i [IMPURITY_METHOD]]
                [-t [TRAINING_FILE]] [-r [TESTING_FILE]] [-o [OUTPUT_FILE]]
                [-f]
 
@@ -53,13 +53,14 @@ optional arguments:
   -h, --help            show this help message and exit
   -c [CONFIDENCE_LEVEL]
                         Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0
-  -p [PURITY_METHOD]    Which purity method do you want. Acceptable values are entropy, ent, gni.
+  -i [IMPURITY_METHOD]  Which impurity method do you want. Acceptable values are entropy, ent, gni.
   -t [TRAINING_FILE]    Specify the training file you want to use. Default is "training.csv"
   -r [TESTING_FILE]     Specify the testing file you want to use. Default is "testing.csv"
   -o [OUTPUT_FILE]      Specify where you want your output of classifications to go. Default is "output.csv"
   -f, --rf              Specify this option if you want to use random forests.
                         Otherwise we will build one tree only.
                         Note that building random forests takes time. Expect 300 trees to take 5-10 minutes.
+
 
 This help menu should guide you through any questions about the parameter usage,
 but I will display a few examples for edification.
@@ -68,12 +69,12 @@ but I will display a few examples for edification.
 python main.py -c 0.95 -p entropy -t training.csv -r testing.csv -o output.csv
 The above will run the default settings that you'll get with no flags set.
 
-python main.py -c 0.99 -p gni -t training.csv -r testing.csv -o rf_test.csv -f
+python main.py -c 0.99 -i gni -t training.csv -r testing.csv -o rf_test.csv -f
 This will run the program with 0.99 confidence, gni impurity function, loading
 training file from "training.csv", loading testing file from "testing.csv",
 outputting your data to "rf_test.csv" and will run random forests.
 
-python main.py -c 0.90 -p gni -o test.csv -f
+python main.py -c 0.90 -i gni -o test.csv -f
 The above will run 0.90 confidence, gni impurity, output to "test.csv", and run
 random forests. The rest will be set to defaults.
 

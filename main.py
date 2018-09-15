@@ -43,8 +43,8 @@ def main():
     parser = argparse.ArgumentParser(description=description_string, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-c', dest='confidence_level', type=float, action='store', nargs='?',
                         default=0.95, help='Confidence level of chi square. Acceptable values are 0.90, 0.95, 0.99, 0')
-    parser.add_argument('-p', dest='purity_method', type=str, action='store', nargs='?',
-                        default="entropy", help='Which purity method do you want. Acceptable values are entropy, ent, gni.')
+    parser.add_argument('-i', dest='impurity_method', type=str, action='store', nargs='?',
+                        default="entropy", help='Which impurity method do you want. Acceptable values are entropy, ent, gni.')
     parser.add_argument('-t', dest='training_file', type=str, action='store', nargs='?',
                         default="training.csv", help='Specify the training file you want to use. Default is \"training.csv\"')
     parser.add_argument('-r', dest='testing_file', type=str, action='store', nargs='?',
@@ -60,7 +60,7 @@ def main():
         print("Improper confidence level specified. Using default confidence of 0.95.")
         confidence_level = 0.95
 
-    impurity_string = (args.purity_method).lower()
+    impurity_string = (args.impurity_method).lower()
 
     # Using the argument to select whether we are using gni or entropy
     if impurity_string == "ent" or impurity_string == "entropy":
@@ -107,7 +107,7 @@ def status_print(confidence_level, training_file, testing_file, output_file, rf)
 # Random Forests' collection method for running against training data and building decision trees.
 def train_rf(training_file_name, partition_size):
 
-    num_of_trees = 65
+    num_of_trees = 5000
     list_of_data = []
     list_of_data_features_split = []
     list_of_features = []
